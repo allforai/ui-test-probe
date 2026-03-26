@@ -65,14 +65,16 @@ const result = await page.probe.actAndWait(
 | **Multimedia** | `data.readyState/paused/currentTime` for video; `source.status` for images |
 | **Focus navigation** | `accessibility.tabIndex` + Event Stream focus tracking |
 
-## Element Model (13 Attributes)
+## Element Model (15 Attributes)
 
 ```
-id, type, accessibility, state, data, source, linkage,
-layout, shortcuts, animation, locale, theme, eventBindings, session
+id, type, accessibility, state, data, source, linkage, layout,
+shortcuts, animation, locale, theme, eventBindings, session,
+parent, children
 ```
 
-Attributes are type-specific: a DataGrid has `data.sort/filter`, a video has `data.currentTime/paused`. Empty fields are omitted.
+- **Type-specific**: DataGrid has `data.sort/filter`, video has `data.currentTime/paused`. Empty fields omitted.
+- **Hierarchy**: `parent` + `children` form a tree. `isEffectivelyVisible(id)` checks the ancestor chain — child `visible=true` but parent `hidden` → effectively invisible.
 
 ## Linkage Model (6 Path Types)
 

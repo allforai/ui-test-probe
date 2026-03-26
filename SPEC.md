@@ -78,7 +78,7 @@
 | 多媒体 | State Exposure（playing/readyState/currentTime）+ Source Binding |
 | 焦点跳转 | Event Stream（focus 变化）+ Element Registry（tabIndex） |
 
-## 6. 统一元素模型（13 个属性）
+## 6. 统一元素模型（15 个属性）
 
 ```typescript
 interface ProbeElement {
@@ -97,10 +97,14 @@ interface ProbeElement {
   theme?: { mode?, colorScheme? };
   eventBindings?: string[];
   session?: { isDirty?, hasUnsavedChanges? };
+  parent?: string;               // 父元素 probe ID
+  children?: string[];           // 子元素 probe ID 列表
 }
 ```
 
 **type 级扩展**：`data` 字段结构按 `type` 不同而不同（data-container 有 sort/filter，media 有 currentTime/paused）。空字段不暴露。
+
+**层级关系**：`parent` + `children` 形成树形结构。`isEffectivelyVisible(id)` 沿父链检查实际可见性 — 子控件 `visible=true` 但父容器 `hidden` → 实际不可见。这对显隐联动验证至关重要。
 
 ## 7. 联动模型（6 种路径）
 

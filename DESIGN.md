@@ -9,7 +9,7 @@
 
 所有平台共享一个平台无关的元素模型。每个平台 SDK 负责将自己的 UI 树（DOM / Widget Tree / SwiftUI View / Compose Node）映射到此统一结构。
 
-### ProbeElement（13 个属性 + type 级扩展）
+### ProbeElement（15 个属性 + type 级扩展）
 
 ```typescript
 interface ProbeElement {
@@ -118,6 +118,10 @@ interface ProbeElement {
     isDirty?: boolean;
     hasUnsavedChanges?: boolean;
   };
+
+  // === Hierarchy ===
+  parent?: string;             // 父元素 probe ID
+  children?: string[];         // 子元素 probe ID 列表
 }
 ```
 
@@ -141,6 +145,7 @@ enum ProbeType {
 
 - **空字段不暴露**：按钮没有 `source`，分页器没有 `animation`，只有实际有值的字段才出现
 - **type 决定 data 结构**：`data-container` 有 sort/filter/selectedRows，`media` 有 currentTime/duration/paused
+- **层级关系**：`parent` + `children` 形成树形结构，`isEffectivelyVisible()` 沿父链检查实际可见性（子控件 visible 但父容器 hidden → 实际不可见）
 - **所有平台映射到同一结构**：测试代码写一次查询逻辑，跨平台复用
 
 ---
@@ -260,6 +265,14 @@ interface UITestProbe {
     elements: ProbeElement[];
     unreadyElements: string[];
   };
+
+  // === 原语 1.5: Hierarchy ===
+  queryChildren(id: string): ProbeElement[];                // 直接子元素
+  queryDescendants(id: string): ProbeElement[];              // 所有后代
+  queryParent(id: string): ProbeElement | null;              // 父元素
+  getAncestorChain(id: string): ProbeElement[];              // 从根到自身的完整路径
+  isEffectivelyVisible(id: string): boolean;                 // 沿父链检查实际可见性
+  // 子控件 visible=true 但父容器 hidden → isEffectivelyVisible 返回 false
 
   // === 原语 2: State Exposure ===
   getState(id: string): ProbeElement['state'];
