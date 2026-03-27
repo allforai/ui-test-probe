@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:probe="clr-namespace:UITestProbe.Maui;assembly=UITestProbe.Maui"
+             xmlns:vm="clr-namespace:OrderApp.ViewModels"
+             x:Class="OrderApp.Pages.OrderPage"
+             probe:Probe.Id="order-page"
+             probe:Probe.Type="Page">
+
+    <ContentPage.BindingContext>
+        <vm:OrderViewModel />
+    </ContentPage.BindingContext>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="16">
+
+        <!-- Toolbar -->
+        <HorizontalStackLayout Grid.Row="0" Spacing="8">
+            <Label Text="Order Management"
+                   FontSize="22" FontAttributes="Bold"
+                   VerticalOptions="Center"
+                   HorizontalOptions="StartAndExpand" />
+
+            <Button Text="Create Order"
+                    Command="{Binding ShowCreateDialogCommand}"
+                    probe:Probe.Id="create-order-btn"
+                    probe:Probe.Type="Action"
+                    probe:Probe.Trigger="tap; opens:create-order-modal" />
+        </HorizontalStackLayout>
+
+        <!-- Status Filter -->
+        <Picker Grid.Row="1"
+                Title="Filter by Status"
+                ItemsSource="{Binding StatusOptions}"
+                SelectedItem="{Binding StatusFilter}"
+                probe:Probe.Id="status-filter"
+                probe:Probe.Type="Selector"
+                probe:Probe.Linkage="target:order-table; effect:DataReload; path:GET /api/orders" />
+
+        <!-- Order Table -->
+        <CollectionView Grid.Row="2"
+                        ItemsSource="{Binding Orders}"
+                        probe:Probe.Id="order-table"
+                        probe:Probe.Type="DataContainer"
+                        probe:Probe.Source="GET /api/orders"
+                        probe:Probe.State="{Binding TableState}"
+                        probe:Probe.Children="order-row-*">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid ColumnDefinitions="*,*,Auto,Auto"
+                          Padding="8"
+                          probe:Probe.Id="{Binding Id, StringFormat='order-row-{0}'}"
+                          probe:Probe.Type="DataRow">
+                        <Label Grid.Column="0" Text="{Binding Id}" FontAttributes="Bold" />
+                        <Label Grid.Column="1" Text="{Binding Customer}" />
+                        <Label Grid.Column="2" Text="{Binding Status}" TextColor="{Binding StatusColor}" />
+                        <Label Grid.Column="3" Text="{Binding Total, StringFormat='{0:C}'}" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Paginator -->
+        <HorizontalStackLayout Grid.Row="3"
+                               HorizontalOptions="Center"
+                               Spacing="12"
+                               probe:Probe.Id="paginator"
+                               probe:Probe.Type="Navigation"
+                               probe:Probe.Linkage="target:order-table; effect:DataReload; path:GET /api/orders">
+            <Button Text="Previous"
+                    Command="{Binding PrevPageCommand}"
+                    IsEnabled="{Binding CanGoPrev}" />
+            <Label Text="{Binding PageLabel}" VerticalOptions="Center" />
+            <Button Text="Next"
+                    Command="{Binding NextPageCommand}"
+                    IsEnabled="{Binding CanGoNext}" />
+        </HorizontalStackLayout>
+
+    </Grid>
+
+    <!-- Create Order Modal (popup) -->
+    <!-- Shown programmatically; probe annotations in code-behind -->
+
+</ContentPage>
