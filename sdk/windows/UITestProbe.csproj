@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <RootNamespace>UITestProbe</RootNamespace>
+    <PackageId>AllForAI.UITestProbe</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>AllForAI</Authors>
+    <Description>UI Test Probe SDK for Windows (MAUI/WinUI) — observable UI testing infrastructure</Description>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseMaui>true</UseMaui>
+  </PropertyGroup>
+
+</Project>

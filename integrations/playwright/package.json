@@ -1,0 +1,39 @@
+{
+  "name": "@allforai/ui-test-probe-playwright",
+  "version": "0.1.0",
+  "description": "Playwright integration for UI Test Probe — inject collector, typed page.probe API, custom matchers.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "ui-test",
+    "probe",
+    "playwright",
+    "testing"
+  ],
+  "author": "allforai",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/allforai/ui-test-probe.git",
+    "directory": "integrations/playwright"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.40.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

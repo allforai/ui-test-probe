@@ -1,0 +1,368 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://allforai.com/ui-test-probe/probe-element.schema.json",
+  "title": "ProbeElement",
+  "description": "Platform-agnostic UI element model with 15 attributes and type-specific data extensions.",
+  "type": "object",
+  "required": ["id", "type", "state", "layout"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Semantic identifier, e.g. 'order-list', 'status-filter'.",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "data-container",
+        "selector",
+        "action",
+        "display",
+        "media",
+        "form",
+        "page",
+        "modal",
+        "navigation"
+      ],
+      "description": "Widget type — determines data field structure."
+    },
+    "accessibility": {
+      "type": "object",
+      "properties": {
+        "role": { "type": "string" },
+        "label": { "type": "string" },
+        "tabIndex": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "state": {
+      "$ref": "#/$defs/ElementState"
+    },
+    "data": {
+      "$ref": "#/$defs/ElementData"
+    },
+    "source": {
+      "$ref": "#/$defs/SourceBinding"
+    },
+    "linkage": {
+      "type": "object",
+      "required": ["targets"],
+      "properties": {
+        "targets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/LinkageTarget" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "layout": {
+      "$ref": "#/$defs/LayoutMetrics"
+    },
+    "shortcuts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "action"],
+        "properties": {
+          "key": { "type": "string" },
+          "action": { "type": "string" },
+          "platform": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "animation": {
+      "type": "object",
+      "required": ["playing"],
+      "properties": {
+        "playing": { "type": "boolean" },
+        "name": { "type": "string" },
+        "duration": { "type": "number", "minimum": 0 },
+        "progress": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "locale": {
+      "type": "object",
+      "properties": {
+        "language": { "type": "string" },
+        "direction": { "type": "string", "enum": ["ltr", "rtl"] },
+        "isRTL": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "theme": {
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string", "enum": ["light", "dark", "high-contrast"] },
+        "colorScheme": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "eventBindings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "session": {
+      "type": "object",
+      "properties": {
+        "isDirty": { "type": "boolean" },
+        "hasUnsavedChanges": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "parent": {
+      "type": "string",
+      "description": "Parent element probe ID."
+    },
+    "children": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Child element probe IDs."
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "type": { "const": "data-container" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "properties": {
+              "sort": {
+                "type": "object",
+                "required": ["column", "direction"],
+                "properties": {
+                  "column": { "type": "string" },
+                  "direction": { "type": "string", "enum": ["asc", "desc"] }
+                },
+                "additionalProperties": false
+              },
+              "filter": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["field", "operator", "value"],
+                  "properties": {
+                    "field": { "type": "string" },
+                    "operator": { "type": "string" },
+                    "value": {}
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "selectedRows": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "media" } }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "properties": {
+              "currentTime": { "type": "number", "minimum": 0 },
+              "duration": { "type": "number", "minimum": 0 },
+              "readyState": { "type": "integer", "minimum": 0, "maximum": 4 },
+              "paused": { "type": "boolean" },
+              "networkState": { "type": "integer", "minimum": 0, "maximum": 3 }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "ElementState": {
+      "type": "object",
+      "required": ["current", "timestamp"],
+      "properties": {
+        "current": {
+          "type": "string",
+          "description": "Current state: loading | loaded | error | empty | disabled | submitting."
+        },
+        "previous": { "type": "string" },
+        "timestamp": {
+          "type": "number",
+          "description": "Epoch ms of last state change."
+        },
+        "isOpen": { "type": "boolean" },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["field", "message"],
+            "properties": {
+              "field": { "type": "string" },
+              "message": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ElementData": {
+      "type": "object",
+      "properties": {
+        "value": {},
+        "options": { "type": "array", "items": { "type": "string" } },
+        "rows": { "type": "integer", "minimum": 0 },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "visible"],
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "type": "string" },
+              "visible": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "sort": {
+          "type": "object",
+          "properties": {
+            "column": { "type": "string" },
+            "direction": { "type": "string", "enum": ["asc", "desc"] }
+          },
+          "additionalProperties": false
+        },
+        "filter": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": { "type": "string" },
+              "operator": { "type": "string" },
+              "value": {}
+            },
+            "additionalProperties": false
+          }
+        },
+        "selectedRows": { "type": "array", "items": { "type": "string" } },
+        "currentTime": { "type": "number" },
+        "duration": { "type": "number" },
+        "readyState": { "type": "integer" },
+        "paused": { "type": "boolean" },
+        "networkState": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "SourceBinding": {
+      "type": "object",
+      "required": ["url", "method"],
+      "properties": {
+        "url": { "type": "string" },
+        "method": { "type": "string" },
+        "status": { "type": "integer" },
+        "responseTime": { "type": "number", "minimum": 0 },
+        "payload": {}
+      },
+      "additionalProperties": false
+    },
+    "LinkageTarget": {
+      "type": "object",
+      "required": ["id", "effect", "path"],
+      "properties": {
+        "id": { "type": "string" },
+        "effect": {
+          "type": "string",
+          "enum": [
+            "options_update",
+            "data_reload",
+            "visibility_toggle",
+            "enabled_toggle",
+            "value_update",
+            "reset",
+            "navigate"
+          ]
+        },
+        "path": { "$ref": "#/$defs/LinkagePath" }
+      },
+      "additionalProperties": false
+    },
+    "LinkagePath": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": { "type": { "const": "direct" } },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "url"],
+          "properties": {
+            "type": { "const": "api" },
+            "url": { "type": "string" },
+            "method": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "expression"],
+          "properties": {
+            "type": { "const": "computed" },
+            "expression": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "storeName"],
+          "properties": {
+            "type": { "const": "store" },
+            "storeName": { "type": "string" },
+            "action": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "route"],
+          "properties": {
+            "type": { "const": "navigation" },
+            "route": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "through"],
+          "properties": {
+            "type": { "const": "chain" },
+            "through": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "LayoutMetrics": {
+      "type": "object",
+      "required": ["x", "y", "width", "height", "visible"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 },
+        "visible": { "type": "boolean" },
+        "renderTime": { "type": "number", "minimum": 0 },
+        "scrollTop": { "type": "number" },
+        "scrollLeft": { "type": "number" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@allforai/ui-test-probe-detox",
+  "version": "0.1.0",
+  "description": "UI Test Probe integration for Detox — probe-driven React Native E2E testing",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "detox": ">=20.0.0",
+    "@allforai/ui-test-probe-rn": ">=0.1.0"
+  },
+  "devDependencies": {
+    "detox": "^20.0.0",
+    "@allforai/ui-test-probe-rn": "^0.1.0",
+    "typescript": "^5.3.0"
+  },
+  "license": "MIT"
+}

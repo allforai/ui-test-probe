@@ -1,0 +1,94 @@
+{
+  "$schema": "https://allforai.com/ui-test-probe/devices.schema.json",
+  "description": "Built-in device presets for platform matrix testing.",
+  "devices": {
+    "iphone-se": {
+      "name": "iPhone SE",
+      "screenSize": { "width": 375, "height": 667 },
+      "pixelRatio": 2,
+      "hasNotch": false,
+      "hasSafeArea": false,
+      "formFactor": "phone"
+    },
+    "iphone-15-pro": {
+      "name": "iPhone 15 Pro",
+      "screenSize": { "width": 393, "height": 852 },
+      "pixelRatio": 3,
+      "hasNotch": true,
+      "hasSafeArea": true,
+      "formFactor": "phone"
+    },
+    "ipad-air": {
+      "name": "iPad Air",
+      "screenSize": { "width": 820, "height": 1180 },
+      "pixelRatio": 2,
+      "hasNotch": false,
+      "hasSafeArea": false,
+      "formFactor": "tablet"
+    },
+    "ipad-pro-12": {
+      "name": "iPad Pro 12.9\"",
+      "screenSize": { "width": 1024, "height": 1366 },
+      "pixelRatio": 2,
+      "hasNotch": false,
+      "hasSafeArea": false,
+      "formFactor": "tablet"
+    },
+    "pixel-8": {
+      "name": "Pixel 8",
+      "screenSize": { "width": 412, "height": 915 },
+      "pixelRatio": 2.625,
+      "hasNotch": false,
+      "hasSafeArea": false,
+      "formFactor": "phone"
+    },
+    "galaxy-s24": {
+      "name": "Galaxy S24",
+      "screenSize": { "width": 360, "height": 780 },
+      "pixelRatio": 3,
+      "hasNotch": false,
+      "hasSafeArea": false,
+      "formFactor": "phone"
+    },
+    "galaxy-tab-s9": {
+      "name": "Galaxy Tab S9",
+      "screenSize": { "width": 800, "height": 1280 },
+      "pixelRatio": 2,
+      "hasNotch": false,
+      "hasSafeArea": false,
+      "formFactor": "tablet"
+    },
+    "galaxy-fold": {
+      "name": "Galaxy Z Fold",
+      "screenSize": { "width": 373, "height": 846 },
+      "pixelRatio": 3,
+      "hasNotch": false,
+      "hasSafeArea": false,
+      "formFactor": "foldable"
+    },
+    "macbook-air-13": {
+      "name": "MacBook Air 13\"",
+      "screenSize": { "width": 1470, "height": 956 },
+      "pixelRatio": 2,
+      "hasNotch": true,
+      "hasSafeArea": false,
+      "formFactor": "desktop"
+    },
+    "desktop-1080p": {
+      "name": "Desktop 1080p",
+      "screenSize": { "width": 1920, "height": 1080 },
+      "pixelRatio": 1,
+      "hasNotch": false,
+      "hasSafeArea": false,
+      "formFactor": "desktop"
+    },
+    "desktop-1440p": {
+      "name": "Desktop 1440p",
+      "screenSize": { "width": 2560, "height": 1440 },
+      "pixelRatio": 1,
+      "hasNotch": false,
+      "hasSafeArea": false,
+      "formFactor": "desktop"
+    }
+  }
+}

@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://allforai.com/ui-test-probe/probe-api.schema.json",
+  "title": "ProbeAPI Protocol",
+  "description": "JSON-based request/response protocol for the 6 primitives + hierarchy + platform context.",
+
+  "$defs": {
+    "ProbeRequest": {
+      "type": "object",
+      "required": ["method"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": [
+            "query",
+            "queryAll",
+            "queryPage",
+            "queryChildren",
+            "queryDescendants",
+            "queryParent",
+            "getAncestorChain",
+            "isEffectivelyVisible",
+            "getState",
+            "getStates",
+            "waitForState",
+            "waitForPageReady",
+            "onStateChange",
+            "onEvent",
+            "getSource",
+            "getNetworkLog",
+            "waitForSource",
+            "getLayout",
+            "getOverlaps",
+            "getScrollPosition",
+            "click",
+            "doubleClick",
+            "rightClick",
+            "hover",
+            "focus",
+            "type",
+            "fill",
+            "clear",
+            "select",
+            "check",
+            "scrollTo",
+            "scrollToBottom",
+            "scrollIntoView",
+            "drag",
+            "pressShortcut",
+            "navigate",
+            "snapshot",
+            "diff",
+            "verifyLinkage",
+            "actAndWait",
+            "setPlatformContext",
+            "getPlatformContext",
+            "setDevice",
+            "runAcrossDevices"
+          ]
+        },
+        "params": { "$ref": "#/$defs/RequestParams" }
+      },
+      "additionalProperties": false
+    },
+
+    "RequestParams": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Target element probe ID."
+        },
+        "ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Multiple element IDs (for getStates)."
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "data-container", "selector", "action", "display",
+            "media", "form", "page", "modal", "navigation"
+          ],
+          "description": "Filter by ProbeType (for queryAll)."
+        },
+        "state": {
+          "type": "string",
+          "description": "Target state to wait for."
+        },
+        "timeout": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Timeout in ms."
+        },
+        "event": {
+          "type": "string",
+          "description": "Event name (for onEvent)."
+        },
+        "text": {
+          "type": "string",
+          "description": "Text to type."
+        },
+        "value": {
+          "description": "Value for fill/select/check."
+        },
+        "checked": {
+          "type": "boolean",
+          "description": "Checked state for check()."
+        },
+        "position": {
+          "type": "object",
+          "properties": {
+            "top": { "type": "number" },
+            "left": { "type": "number" }
+          },
+          "additionalProperties": false,
+          "description": "Scroll position for scrollTo."
+        },
+        "sourceId": {
+          "type": "string",
+          "description": "Source element ID for drag."
+        },
+        "targetId": {
+          "type": "string",
+          "description": "Target element ID for drag."
+        },
+        "key": {
+          "type": "string",
+          "description": "Shortcut key for pressShortcut."
+        },
+        "route": {
+          "type": "string",
+          "description": "Route for navigate."
+        },
+        "action": {
+          "type": "string",
+          "description": "Action name for verifyLinkage/actAndWait."
+        },
+        "waitFor": {
+          "type": "object",
+          "properties": {
+            "target": { "type": "string" },
+            "state": { "type": "string" },
+            "timeout": { "type": "number" }
+          },
+          "additionalProperties": false,
+          "description": "Wait conditions for actAndWait."
+        },
+        "snapshotA": {
+          "type": "object",
+          "description": "First snapshot for diff."
+        },
+        "snapshotB": {
+          "type": "object",
+          "description": "Second snapshot for diff."
+        },
+        "context": {
+          "$ref": "#/$defs/PlatformContext",
+          "description": "Platform context for setPlatformContext."
+        },
+        "preset": {
+          "type": "string",
+          "description": "Device preset name for setDevice."
+        },
+        "devices": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Device presets for runAcrossDevices."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "ProbeResponse": {
+      "type": "object",
+      "required": ["ok"],
+      "properties": {
+        "ok": { "type": "boolean" },
+        "data": {
+          "description": "Response payload — varies by method."
+        },
+        "error": { "$ref": "#/$defs/ProbeError" }
+      },
+      "additionalProperties": false
+    },
+
+    "ProbeError": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "NOT_FOUND",
+            "NOT_VISIBLE",
+            "DISABLED",
+            "BUSY",
+            "OPTION_NOT_FOUND",
+            "TIMEOUT",
+            "INVALID_REQUEST"
+          ]
+        },
+        "message": { "type": "string" },
+        "id": { "type": "string" },
+        "reason": { "type": "string" },
+        "available": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "PlatformContext": {
+      "type": "object",
+      "required": ["platform", "device", "viewport", "inputMode"],
+      "properties": {
+        "platform": {
+          "type": "string",
+          "enum": [
+            "web-chrome", "web-safari", "web-firefox",
+            "ios", "android", "macos", "windows", "linux"
+          ]
+        },
+        "device": {
+          "type": "object",
+          "required": ["name", "screenSize", "pixelRatio", "hasNotch", "hasSafeArea", "formFactor"],
+          "properties": {
+            "name": { "type": "string" },
+            "screenSize": {
+              "type": "object",
+              "required": ["width", "height"],
+              "properties": {
+                "width": { "type": "number" },
+                "height": { "type": "number" }
+              },
+              "additionalProperties": false
+            },
+            "pixelRatio": { "type": "number" },
+            "hasNotch": { "type": "boolean" },
+            "hasSafeArea": { "type": "boolean" },
+            "formFactor": {
+              "type": "string",
+              "enum": ["phone", "tablet", "desktop", "foldable"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "viewport": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "number" },
+            "height": { "type": "number" }
+          },
+          "additionalProperties": false
+        },
+        "inputMode": {
+          "type": "string",
+          "enum": ["touch", "mouse_keyboard", "stylus", "gamepad"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "oneOf": [
+    { "$ref": "#/$defs/ProbeRequest" },
+    { "$ref": "#/$defs/ProbeResponse" }
+  ]
+}

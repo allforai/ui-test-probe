@@ -1,0 +1,38 @@
+{
+  "name": "@allforai/ui-test-probe-web",
+  "version": "0.1.0",
+  "description": "Web SDK for UI Test Probe — DOM-based collector, state observer, and action dispatcher.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "ui-test",
+    "probe",
+    "testing",
+    "observable",
+    "playwright"
+  ],
+  "author": "allforai",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/allforai/ui-test-probe.git",
+    "directory": "sdk/web"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "eslint": "^9.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "peerDependencies": {},
+  "engines": {
+    "node": ">=18"
+  }
+}

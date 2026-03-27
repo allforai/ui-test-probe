@@ -1,0 +1,17 @@
+name: ui_test_probe_flutter_test
+description: Flutter test integration for UI Test Probe — extends WidgetTester with probe-aware queries and actions.
+version: 0.1.0
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+  ui_test_probe:
+    path: ../../sdk/flutter
+
+dev_dependencies:
+  flutter_lints: ^3.0.0
