@@ -141,6 +141,72 @@ enum ProbeType {
 }
 ```
 
+### 平台上下文
+
+```typescript
+interface PlatformContext {
+  platform: Platform;
+  device: DeviceProfile;
+  viewport: { width: number; height: number };
+  inputMode: InputMode;
+}
+
+enum Platform {
+  WEB_CHROME = "web-chrome",
+  WEB_SAFARI = "web-safari",
+  WEB_FIREFOX = "web-firefox",
+  IOS = "ios",
+  ANDROID = "android",
+  MACOS = "macos",
+  WINDOWS = "windows",
+  LINUX = "linux",
+}
+
+interface DeviceProfile {
+  name: string;                    // "iPhone 15 Pro"
+  screenSize: { width: number; height: number };
+  pixelRatio: number;
+  hasNotch: boolean;
+  hasSafeArea: boolean;
+  formFactor: "phone" | "tablet" | "desktop" | "foldable";
+}
+
+enum InputMode {
+  TOUCH = "touch",
+  MOUSE_KEYBOARD = "mouse_keyboard",
+  STYLUS = "stylus",
+  GAMEPAD = "gamepad",
+}
+```
+
+**内置设备预设**（框架自带，开发者不需要手动填参数）：
+
+| 预设 | 尺寸 | 比例 | 形态 |
+|------|------|------|------|
+| `iphone-se` | 375×667 | 2x | phone |
+| `iphone-15-pro` | 393×852 | 3x | phone |
+| `ipad-air` | 820×1180 | 2x | tablet |
+| `ipad-pro-12` | 1024×1366 | 2x | tablet |
+| `pixel-8` | 412×915 | 2.625x | phone |
+| `galaxy-s24` | 360×780 | 3x | phone |
+| `galaxy-tab-s9` | 800×1280 | 2x | tablet |
+| `galaxy-fold` | 373×846 | 3x | foldable |
+| `macbook-air-13` | 1470×956 | 2x | desktop |
+| `desktop-1080p` | 1920×1080 | 1x | desktop |
+| `desktop-1440p` | 2560×1440 | 1x | desktop |
+
+**各平台 setDevice 实现**：
+
+| 平台 | 实现方式 |
+|------|---------|
+| Web | Playwright `page.setViewportSize()` |
+| Flutter | `WidgetTester` 设置 `Size` + `MediaQuery` |
+| iOS | 选择 Simulator 设备 |
+| Android | 选择 Emulator AVD |
+| macOS/Windows | 设置窗口尺寸 |
+
+**平台矩阵测试**：同一测试函数通过 `runAcrossDevices()` 在多设备上执行，结果按设备汇总。Flutter/RN/MAUI 等跨平台框架一次编写测试，自动覆盖所有目标设备。
+
 ### 设计原则
 
 - **空字段不暴露**：按钮没有 `source`，分页器没有 `animation`，只有实际有值的字段才出现
@@ -266,7 +332,16 @@ interface UITestProbe {
     unreadyElements: string[];
   };
 
-  // === 原语 1.5: Hierarchy ===
+  // === 原语 1.5: Platform Context ===
+  setPlatformContext(context: PlatformContext): Promise<void>;
+  getPlatformContext(): PlatformContext;
+  setDevice(preset: string): Promise<void>;   // 'iphone-15-pro' / 'pixel-8' / 'ipad-air'
+  runAcrossDevices(
+    devices: string[],
+    test: (probe: UITestProbe) => Promise<void>
+  ): Promise<Record<string, TestResult>>;
+
+  // === 原语 1.6: Hierarchy ===
   queryChildren(id: string): ProbeElement[];                // 直接子元素
   queryDescendants(id: string): ProbeElement[];              // 所有后代
   queryParent(id: string): ProbeElement | null;              // 父元素

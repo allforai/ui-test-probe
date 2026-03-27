@@ -87,6 +87,24 @@ parent, children
 | `navigation` | Through route change |
 | `chain` | Through intermediate element (A → B → C) |
 
+## Cross-Device Matrix Testing
+
+One test, all devices — `runAcrossDevices()` runs the same test function across multiple device profiles:
+
+```typescript
+const results = await probe.runAcrossDevices(
+  ['iphone-15-pro', 'pixel-8', 'ipad-air', 'desktop-1080p'],
+  async (probe) => {
+    await probe.waitForPageReady();
+    const list = await probe.query('order-list');
+    expect(list.state.current).toBe('loaded');
+  }
+);
+// { 'iphone-15-pro': PASS, 'pixel-8': PASS, 'ipad-air': PASS, 'desktop-1080p': PASS }
+```
+
+Built-in device presets: iPhone SE/15 Pro, iPad Air/Pro, Pixel 8, Galaxy S24/Tab S9/Fold, MacBook Air, Desktop 1080p/1440p. Each includes screen size, pixel ratio, form factor, notch/safe-area info.
+
 ## Platform Coverage
 
 | Platform | SDK Language | Status |

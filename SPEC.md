@@ -66,6 +66,13 @@
 | 5 | **Layout Metrics** | 尺寸/位置/滚动位置/渲染时间 |
 | 6 | **Action Dispatch** | 语义化操作 + 操作前智能检查 + 联动自动验证 |
 
+辅助能力（基于原语之上）：
+
+| 能力 | 说明 |
+|------|------|
+| **Hierarchy** | 父子关系查询 + `isEffectivelyVisible()` 沿父链检查实际可见性 |
+| **Platform Context** | 平台/设备/视口管理 + `runAcrossDevices()` 多设备矩阵测试 |
+
 7 个痛点全部是这 6 个原语的组合：
 
 | 痛点 | = 哪些原语组合 |
@@ -117,7 +124,24 @@ interface ProbeElement {
 | **navigation** | 经过路由 | 验 URL 变化 + 目标页加载 |
 | **chain** | 经过中间元素（A→B→C） | 验每一跳的状态 |
 
-## 8. 平台覆盖
+## 8. 平台测试矩阵
+
+跨平台框架（Flutter/RN/MAUI）一套代码跑多平台。框架内置设备预设，`runAcrossDevices()` 一次编写测试、多设备运行：
+
+```typescript
+const results = await probe.runAcrossDevices(
+  ['iphone-15-pro', 'pixel-8', 'ipad-air', 'desktop-1080p'],
+  async (probe) => {
+    await probe.waitForPageReady();
+    const list = await probe.query('order-list');
+    expect(list.state.current).toBe('loaded');
+  }
+);
+```
+
+内置设备：iPhone SE/15 Pro、iPad Air/Pro、Pixel 8、Galaxy S24/Tab S9/Fold、MacBook Air、Desktop 1080p/1440p。
+
+## 9. 平台覆盖
 
 | 平台 | 标注方式 | 收集器注入 |
 |------|---------|-----------|
@@ -129,7 +153,7 @@ interface ProbeElement {
 | **React Native** | `probeProps` | Detox/Appium 桥接 |
 | **Electron** | 复用 Web 标注 | 复用 Web 收集器 |
 
-## 9. 效果预期
+## 10. 效果预期
 
 | 指标 | 黑盒（现在） | 白盒可观测（目标） |
 |------|------------|-------------------|
@@ -139,7 +163,7 @@ interface ProbeElement {
 | 60 页面完整验收 | 2+ 小时 | 15-30 分钟 |
 | 时序不稳定导致的误判 | 高 | 极低 |
 
-## 10. 实施路线
+## 11. 实施路线
 
 ```
 Phase 1（4 周）: spec 规范 + Web SDK + Playwright 集成
@@ -149,6 +173,6 @@ Phase 4（3 周）: Windows + React Native + CLI 工具
 Phase 5（2 周）: myskills 插件集成（testforge/cr-visual/dev-forge）
 ```
 
-## 11. 详细技术设计
+## 12. 详细技术设计
 
 见 [DESIGN.md](./DESIGN.md)
