@@ -5,9 +5,11 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node build-bundle.mjs",
     "dev": "tsc --watch",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit"
@@ -27,11 +29,11 @@
     "directory": "sdk/web"
   },
   "devDependencies": {
-    "typescript": "^5.5.0",
+    "@types/node": "^20.0.0",
+    "esbuild": "^0.24.2",
     "eslint": "^9.0.0",
-    "@types/node": "^20.0.0"
+    "typescript": "^5.5.0"
   },
-  "peerDependencies": {},
   "engines": {
     "node": ">=18"
   }

@@ -1,6 +1,14 @@
 package com.allforai.uitestprobe.test
 
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.dp
+import com.allforai.uitestprobe.actions.ActionPerformer
+import com.allforai.uitestprobe.actions.ActionDispatcher
+import com.allforai.uitestprobe.annotations.ProbeIdKey
 import com.allforai.uitestprobe.collector.ProbeRegistry
 import com.allforai.uitestprobe.models.DeviceProfile
 import com.allforai.uitestprobe.models.ProbeElement
@@ -9,22 +17,15 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
+ * Custom [SemanticsMatcher] that matches nodes with a specific ProbeId value.
+ */
+fun hasProbeId(probeId: String): SemanticsMatcher =
+    SemanticsMatcher("ProbeId = '$probeId'") { node ->
+        node.config.getOrNull(ProbeIdKey) == probeId
+    }
+
+/**
  * Extension on [ComposeTestRule] providing probe-aware testing capabilities.
- *
- * Usage:
- * ```kotlin
- * @get:Rule
- * val composeRule = createComposeRule()
- *
- * @Test
- * fun loginFlow() {
- *     composeRule.setContent { LoginScreen() }
- *
- *     val probe = composeRule.probeRule
- *     val button = probe.query("login-submit")
- *     probe.actAndWait("login-submit", expectStateKey = "loading", expectStateValue = false)
- * }
- * ```
  */
 val ComposeTestRule.probeRule: ProbeTestRule
     get() = ProbeTestRule(this)
@@ -36,6 +37,47 @@ class ProbeTestRule(
     private val composeRule: ComposeTestRule,
 ) {
     private val registry = ProbeRegistry.shared
+    private val dispatcher = ActionDispatcher(registry)
+    private var currentDevice: DeviceProfile? = null
+
+    init {
+        setupRootNodeProvider()
+        setupActionPerformer()
+    }
+
+    private fun setupRootNodeProvider() {
+        registry.rootNodeProvider = {
+            composeRule.waitForIdle()
+            val nodes = composeRule.onAllNodes(SemanticsMatcher("any") { true })
+                .fetchSemanticsNodes(atLeastOneRootRequired = true)
+            var root = nodes.first()
+            while (root.parent != null) {
+                root = root.parent!!
+            }
+            root
+        }
+    }
+
+    private fun setupActionPerformer() {
+        dispatcher.performer = object : ActionPerformer {
+            override fun performTap(probeId: String) {
+                composeRule.onNode(hasProbeId(probeId)).performClick()
+            }
+            override fun performTextInput(probeId: String, text: String) {
+                val node = composeRule.onNode(hasProbeId(probeId))
+                node.performTextClearance()
+                node.performTextInput(text)
+            }
+            override fun waitForIdle() {
+                composeRule.waitForIdle()
+            }
+        }
+    }
+
+    private fun ensureScanned() {
+        setupRootNodeProvider()
+        registry.scan()
+    }
 
     /**
      * Query a single probe element by ID.
@@ -45,46 +87,45 @@ class ProbeTestRule(
      * @throws NoSuchElementException if not found.
      */
     fun query(probeId: String): ProbeElement {
-        // TODO: trigger registry scan via composeRule's semantics owner, return element
-        throw NotImplementedError("ProbeTestRule.query() not yet implemented")
+        ensureScanned()
+        return registry.query(probeId)
+            ?: throw NoSuchElementException(
+                "Probe element '$probeId' not found. " +
+                "Available: ${registry.queryAll().map { it.id }}"
+            )
     }
 
     /**
      * Query all probe elements, optionally filtered.
-     *
-     * @param type If provided, only return elements of this type.
-     * @param screen If provided, only return elements on this screen.
-     * @return List of matching [ProbeElement] instances.
      */
     fun queryAll(type: ProbeType? = null, screen: String? = null): List<ProbeElement> {
-        // TODO: delegate to registry.queryAll()
-        throw NotImplementedError("ProbeTestRule.queryAll() not yet implemented")
+        ensureScanned()
+        return registry.queryAll(type = type, screen = screen)
     }
 
     /**
      * Wait for the current page to be fully rendered and idle.
-     *
-     * Calls [ComposeTestRule.waitForIdle] and then verifies that all
-     * probe elements on screen report stable states.
-     *
-     * @param timeout Maximum wait time.
      */
     fun waitForPageReady(timeout: Duration = 5.seconds) {
-        // TODO: composeRule.waitForIdle() + probe state stability check
-        throw NotImplementedError("ProbeTestRule.waitForPageReady() not yet implemented")
+        composeRule.waitForIdle()
+        val deadlineMs = System.currentTimeMillis() + timeout.inWholeMilliseconds
+        while (System.currentTimeMillis() < deadlineMs) {
+            ensureScanned()
+            val statesBefore = registry.queryAll().associate { it.id to it.state }
+            composeRule.waitForIdle()
+            ensureScanned()
+            val statesAfter = registry.queryAll().associate { it.id to it.state }
+            val isStable = statesAfter.all { (_, state) ->
+                state["loading"] != true && state["submitting"] != true
+            }
+            if (isStable && statesBefore == statesAfter) return
+            Thread.sleep(50)
+        }
+        throw AssertionError("Page did not reach ready state within $timeout.")
     }
 
     /**
      * Perform an action on a probe element and wait for an expected state.
-     *
-     * Taps the element identified by [probeId], then waits for the target
-     * to reach the expected state.
-     *
-     * @param probeId The probe ID to act on.
-     * @param expectStateKey The state key to monitor.
-     * @param expectStateValue The expected value.
-     * @param timeout Maximum wait time.
-     * @return The probe element after the state change.
      */
     fun actAndWait(
         probeId: String,
@@ -92,36 +133,52 @@ class ProbeTestRule(
         expectStateValue: Any,
         timeout: Duration = 5.seconds,
     ): ProbeElement {
-        // TODO: find SemanticsNode by ProbeIdKey, perform click, poll for state
-        throw NotImplementedError("ProbeTestRule.actAndWait() not yet implemented")
+        composeRule.onNode(hasProbeId(probeId)).performClick()
+        composeRule.waitForIdle()
+        val deadlineMs = System.currentTimeMillis() + timeout.inWholeMilliseconds
+        while (System.currentTimeMillis() < deadlineMs) {
+            ensureScanned()
+            val element = registry.query(probeId)
+            if (element != null && element.state[expectStateKey] == expectStateValue) {
+                return element
+            }
+            composeRule.waitForIdle()
+            Thread.sleep(50)
+        }
+        ensureScanned()
+        val finalElement = registry.query(probeId)
+        if (finalElement != null && finalElement.state[expectStateKey] == expectStateValue) {
+            return finalElement
+        }
+        throw AssertionError(
+            "Element '$probeId' did not reach state '$expectStateKey' == " +
+            "'$expectStateValue' within $timeout. Current state: ${finalElement?.state}"
+        )
     }
 
     /**
      * Set the simulated device profile for responsive testing.
-     *
-     * Adjusts the Compose test surface density and size to match [device].
-     *
-     * @param device The device profile to simulate.
      */
     fun setDevice(device: DeviceProfile) {
-        // TODO: configure composeRule density and size
-        throw NotImplementedError("ProbeTestRule.setDevice() not yet implemented")
+        currentDevice = device
+        registry.reset()
     }
 
     /**
      * Run a test callback across multiple device profiles.
-     *
-     * Executes [testBody] once per device in [devices], resetting the
-     * surface between runs.
-     *
-     * @param devices List of device profiles to test against.
-     * @param testBody The test function to run for each device.
      */
     fun runAcrossDevices(
         devices: List<DeviceProfile>,
         testBody: (DeviceProfile) -> Unit,
     ) {
-        // TODO: iterate devices, setDevice, run testBody, reset
-        throw NotImplementedError("ProbeTestRule.runAcrossDevices() not yet implemented")
+        for (device in devices) {
+            setDevice(device)
+            try {
+                testBody(device)
+            } finally {
+                registry.reset()
+                currentDevice = null
+            }
+        }
     }
 }

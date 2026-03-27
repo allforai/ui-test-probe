@@ -11,7 +11,7 @@
  * All data-probe-* attributes are optional except data-probe-id.
  */
 
-import type { ProbeElement, ProbeType } from '../../../spec/probe-types.js';
+import type { ProbeElement, ProbeType } from '../../../../spec/probe-types.js';
 
 /** Map of data-probe-* attribute names (without prefix) to their parser. */
 interface ParsedAnnotations {
@@ -104,6 +104,42 @@ export class AnnotationParser {
       result.parent = parentAttr;
     }
 
+    // Children (JSON array of probe IDs)
+    const childrenAttr = element.getAttribute(`${AnnotationParser.PREFIX}children`);
+    if (childrenAttr) {
+      result.children = this.parseJSON<string[]>(childrenAttr);
+    }
+
+    // Data fields — build data object from various attributes
+    const data: Record<string, unknown> = {};
+    const valueAttr = element.getAttribute(`${AnnotationParser.PREFIX}value`);
+    if (valueAttr != null) data.value = valueAttr;
+    const optionsAttr = element.getAttribute(`${AnnotationParser.PREFIX}options`);
+    if (optionsAttr) data.options = this.parseJSON(optionsAttr);
+    const rowsAttr = element.getAttribute(`${AnnotationParser.PREFIX}rows`);
+    if (rowsAttr != null) data.rows = parseInt(rowsAttr, 10);
+    const columnsAttr = element.getAttribute(`${AnnotationParser.PREFIX}columns`);
+    if (columnsAttr) data.columns = this.parseJSON(columnsAttr);
+    const sortAttr = element.getAttribute(`${AnnotationParser.PREFIX}sort`);
+    if (sortAttr) data.sort = this.parseJSON(sortAttr);
+    const filterAttr = element.getAttribute(`${AnnotationParser.PREFIX}filter`);
+    if (filterAttr) data.filter = this.parseJSON(filterAttr);
+    if (Object.keys(data).length > 0) {
+      result.data = data as ProbeElement['data'];
+    }
+
+    // Session
+    const sessionAttr = element.getAttribute(`${AnnotationParser.PREFIX}session`);
+    if (sessionAttr) {
+      result.session = this.parseJSON(sessionAttr);
+    }
+
+    // Animation
+    const animationAttr = element.getAttribute(`${AnnotationParser.PREFIX}animation`);
+    if (animationAttr) {
+      result.animation = this.parseJSON(animationAttr);
+    }
+
     // Accessibility from standard ARIA
     result.accessibility = this.parseAccessibility(element);
 
@@ -114,8 +150,19 @@ export class AnnotationParser {
    * Scan all data-probe-* attributes on an element and return raw key-value pairs.
    */
   getRawAnnotations(element: Element): ParsedAnnotations | null {
-    // TODO: implement — iterate element.attributes, filter by prefix
-    throw new Error('Not implemented');
+    const id = element.getAttribute(`${AnnotationParser.PREFIX}id`);
+    if (!id) return null;
+
+    const result: ParsedAnnotations = { id };
+    for (const attr of Array.from(element.attributes)) {
+      if (attr.name.startsWith(AnnotationParser.PREFIX)) {
+        const key = attr.name.slice(AnnotationParser.PREFIX.length) as keyof ParsedAnnotations;
+        if (key !== 'id') {
+          (result as unknown as Record<string, string>)[key] = attr.value;
+        }
+      }
+    }
+    return result;
   }
 
   /**
@@ -123,27 +170,51 @@ export class AnnotationParser {
    * Supports shorthand "GET /api/orders" or just "/api/orders".
    */
   private parseSource(value: string): ProbeElement['source'] {
-    const parts = value.trim().split(/\s+/);
+    // Try JSON first (e.g. '{"url":"/api/orders","method":"GET","status":200}')
+    const trimmed = value.trim();
+    if (trimmed.startsWith('{')) {
+      try {
+        return JSON.parse(trimmed) as ProbeElement['source'];
+      } catch {
+        // Fall through to shorthand parsing
+      }
+    }
+    // Shorthand: "GET /api/orders" or just "/api/orders"
+    const parts = trimmed.split(/\s+/);
     if (parts.length >= 2) {
       return { method: parts[0]!, url: parts.slice(1).join(' ') };
     }
-    return { method: 'GET', url: value.trim() };
+    return { method: 'GET', url: trimmed };
   }
 
   /**
    * Parse a linkage JSON attribute into the linkage structure.
    */
   private parseLinkage(value: string): ProbeElement['linkage'] {
-    // TODO: implement — JSON.parse with error handling, validate target shape
-    throw new Error('Not implemented');
+    try {
+      const parsed = JSON.parse(value);
+      const targets = Array.isArray(parsed) ? parsed : [parsed];
+      return { targets };
+    } catch {
+      return undefined;
+    }
   }
 
   /**
    * Extract accessibility info from standard ARIA attributes.
    */
   private parseAccessibility(element: Element): ProbeElement['accessibility'] {
-    // TODO: implement — read role, aria-label, tabindex
-    throw new Error('Not implemented');
+    const role = element.getAttribute('role') ?? (element as HTMLElement).tagName?.toLowerCase();
+    const label = element.getAttribute('aria-label') ?? element.getAttribute('title') ?? undefined;
+    const tabIndexAttr = element.getAttribute('tabindex');
+    const tabIndex = tabIndexAttr !== null ? parseInt(tabIndexAttr, 10) : undefined;
+
+    if (!role && !label && tabIndex === undefined) return undefined;
+    return {
+      role: role || undefined,
+      label,
+      tabIndex: tabIndex !== undefined && !isNaN(tabIndex) ? tabIndex : undefined,
+    };
   }
 
   /**

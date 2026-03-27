@@ -26,11 +26,40 @@ public class ActionDispatcher
     /// <exception cref="ProbeActionException">If pre-checks fail.</exception>
     public async Task Click(string id)
     {
-        // TODO: 1. Query element from registry
-        //       2. Run pre-flight checks (exists, visible, enabled, not busy)
-        //       3. Invoke UI Automation click on the element
-        //       4. If element has linkage, wait for targets to settle
-        throw new NotImplementedException();
+        PreFlightCheck(id);
+
+        var native = _registry.GetNativeElement(id);
+        if (native == null)
+            throw new ProbeActionException("NOT_FOUND", id, $"Native element not found for '{id}'.");
+
+        // Simulate tap/click via MAUI gesture or direct invocation
+        if (native is Microsoft.Maui.Controls.Button button)
+        {
+            button.SendClicked();
+        }
+        else if (native is Microsoft.Maui.Controls.ImageButton imageButton)
+        {
+            imageButton.SendClicked();
+        }
+        else
+        {
+            // For other elements, invoke any registered TapGestureRecognizer
+            var tapGesture = native.GestureRecognizers
+                .OfType<Microsoft.Maui.Controls.TapGestureRecognizer>()
+                .FirstOrDefault();
+
+            if (tapGesture?.Command != null && tapGesture.Command.CanExecute(tapGesture.CommandParameter))
+            {
+                tapGesture.Command.Execute(tapGesture.CommandParameter);
+            }
+        }
+
+        // If element has linkage, give targets time to settle
+        var element = _registry.Query(id);
+        if (element?.Linkage != null)
+        {
+            await Task.Delay(100);
+        }
     }
 
     /// <summary>
@@ -41,8 +70,31 @@ public class ActionDispatcher
     /// <param name="value">Value to fill.</param>
     public async Task Fill(string id, string value)
     {
-        // TODO: Validate element is Form type, clear existing value, type new value.
-        throw new NotImplementedException();
+        PreFlightCheck(id, "Form");
+
+        var native = _registry.GetNativeElement(id);
+        if (native == null)
+            throw new ProbeActionException("NOT_FOUND", id, $"Native element not found for '{id}'.");
+
+        if (native is Microsoft.Maui.Controls.Entry entry)
+        {
+            entry.Text = value;
+        }
+        else if (native is Microsoft.Maui.Controls.Editor editor)
+        {
+            editor.Text = value;
+        }
+        else if (native is Microsoft.Maui.Controls.SearchBar searchBar)
+        {
+            searchBar.Text = value;
+        }
+        else
+        {
+            throw new ProbeActionException("UNSUPPORTED_CONTROL", id,
+                $"Element '{id}' is not a text input control (Entry, Editor, or SearchBar).");
+        }
+
+        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -53,9 +105,38 @@ public class ActionDispatcher
     /// <param name="value">Option value to select.</param>
     public async Task Select(string id, string value)
     {
-        // TODO: Validate element is Selector type, option exists in data.Options,
-        //       invoke selection via UI Automation.
-        throw new NotImplementedException();
+        PreFlightCheck(id, "Selector");
+
+        var native = _registry.GetNativeElement(id);
+        if (native == null)
+            throw new ProbeActionException("NOT_FOUND", id, $"Native element not found for '{id}'.");
+
+        if (native is Microsoft.Maui.Controls.Picker picker)
+        {
+            var index = picker.Items.IndexOf(value);
+            if (index < 0)
+                throw new ProbeActionException("OPTION_NOT_FOUND", id,
+                    $"Option '{value}' not found in picker '{id}'. Available: [{string.Join(", ", picker.Items)}]");
+            picker.SelectedIndex = index;
+        }
+        else if (native is Microsoft.Maui.Controls.ListView listView)
+        {
+            // For ListView, try to find and select matching item
+            var source = listView.ItemsSource?.Cast<object>().ToList();
+            var match = source?.FirstOrDefault(item => item?.ToString() == value);
+            if (match != null)
+                listView.SelectedItem = match;
+            else
+                throw new ProbeActionException("OPTION_NOT_FOUND", id,
+                    $"Option '{value}' not found in list '{id}'.");
+        }
+        else
+        {
+            throw new ProbeActionException("UNSUPPORTED_CONTROL", id,
+                $"Element '{id}' is not a selector control (Picker or ListView).");
+        }
+
+        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -75,13 +156,64 @@ public class ActionDispatcher
         string expectedState = "loaded",
         int timeoutMs = 5000)
     {
-        // TODO: 1. Parse action string (e.g., "select:completed" -> Select + value)
-        //       2. Subscribe to target state change events
-        //       3. Execute the action on the trigger element
-        //       4. Wait for target to reach expectedState or timeout
-        //       5. If element has linkage, run verifyLinkage
-        //       6. Return structured result
-        throw new NotImplementedException();
+        PreFlightCheck(id);
+
+        var actionStart = DateTimeOffset.UtcNow;
+
+        // Parse and execute the action
+        if (action.StartsWith("select:", StringComparison.OrdinalIgnoreCase))
+        {
+            var selectValue = action["select:".Length..];
+            await Select(id, selectValue);
+        }
+        else if (action.StartsWith("fill:", StringComparison.OrdinalIgnoreCase))
+        {
+            var fillValue = action["fill:".Length..];
+            await Fill(id, fillValue);
+        }
+        else
+        {
+            // Default to click/tap
+            await Click(id);
+        }
+
+        var actionEnd = DateTimeOffset.UtcNow;
+        var actionDuration = (actionEnd - actionStart).TotalMilliseconds;
+
+        // Poll for target state with timeout
+        var waitStart = DateTimeOffset.UtcNow;
+        var deadline = waitStart.AddMilliseconds(timeoutMs);
+        StateInfo? targetState = null;
+
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            var targetElement = _registry.Query(target);
+            if (targetElement != null)
+            {
+                targetState = targetElement.State;
+                if (targetElement.State.Current == expectedState)
+                    break;
+            }
+            await Task.Delay(50);
+        }
+
+        var waitDuration = (DateTimeOffset.UtcNow - waitStart).TotalMilliseconds;
+
+        // Optionally verify linkage
+        LinkageResult? linkageResults = null;
+        var sourceElement = _registry.Query(id);
+        if (sourceElement?.Linkage != null)
+        {
+            linkageResults = await VerifyLinkage(id, action);
+        }
+
+        return new ActAndWaitResult
+        {
+            ActionDuration = actionDuration,
+            WaitDuration = waitDuration,
+            TargetState = targetState ?? new StateInfo { Current = "unknown", Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() },
+            LinkageResults = linkageResults,
+        };
     }
 
     /// <summary>
@@ -93,13 +225,93 @@ public class ActionDispatcher
     /// <returns>Structured linkage verification result.</returns>
     public async Task<LinkageResult> VerifyLinkage(string id, string action)
     {
-        // TODO: 1. Read linkage declaration from element
-        //       2. Execute action
-        //       3. Monitor all declared targets for state changes
-        //       4. Track API calls via source binding
-        //       5. Follow chain paths (A -> B -> C)
-        //       6. Compile results
-        throw new NotImplementedException();
+        var element = _registry.Query(id);
+        if (element?.Linkage == null)
+        {
+            return new LinkageResult
+            {
+                Trigger = id,
+                Action = action,
+                DirectEffects = Array.Empty<DirectEffect>(),
+                ChainedEffects = Array.Empty<ChainedEffect>(),
+                ApiCalls = Array.Empty<ApiCall>(),
+            };
+        }
+
+        var directEffects = new List<DirectEffect>();
+        var chainedEffects = new List<ChainedEffect>();
+        var apiCalls = new List<ApiCall>();
+
+        foreach (var linkTarget in element.Linkage.Targets)
+        {
+            var start = DateTimeOffset.UtcNow;
+
+            // Wait briefly for the target to respond
+            await Task.Delay(200);
+
+            var targetElement = _registry.Query(linkTarget.Id);
+            var duration = (DateTimeOffset.UtcNow - start).TotalMilliseconds;
+
+            if (linkTarget.Path is ChainPath chainPath)
+            {
+                // This is a chained effect (A -> B -> C)
+                var result = targetElement != null && targetElement.State.Current == "loaded" ? "pass" : "timeout";
+                chainedEffects.Add(new ChainedEffect
+                {
+                    Target = linkTarget.Id,
+                    Effect = linkTarget.Effect.ToString(),
+                    Through = chainPath.Through,
+                    Result = result,
+                    Duration = duration,
+                });
+            }
+            else
+            {
+                // Direct effect
+                var result = targetElement != null
+                    ? (targetElement.State.Current == "error" ? "fail" : "pass")
+                    : "timeout";
+
+                directEffects.Add(new DirectEffect
+                {
+                    Target = linkTarget.Id,
+                    Effect = linkTarget.Effect.ToString(),
+                    Result = result,
+                    Duration = duration,
+                });
+            }
+
+            // Track API calls from target source bindings
+            if (linkTarget.Path is ApiPath apiPath)
+            {
+                apiCalls.Add(new ApiCall
+                {
+                    Url = apiPath.Url,
+                    Method = apiPath.Method ?? "GET",
+                    Status = targetElement?.Source?.Status ?? 0,
+                    ResponseTime = targetElement?.Source?.ResponseTime ?? 0,
+                });
+            }
+            else if (targetElement?.Source != null)
+            {
+                apiCalls.Add(new ApiCall
+                {
+                    Url = targetElement.Source.Url,
+                    Method = targetElement.Source.Method,
+                    Status = targetElement.Source.Status ?? 0,
+                    ResponseTime = targetElement.Source.ResponseTime ?? 0,
+                });
+            }
+        }
+
+        return new LinkageResult
+        {
+            Trigger = id,
+            Action = action,
+            DirectEffects = directEffects,
+            ChainedEffects = chainedEffects,
+            ApiCalls = apiCalls,
+        };
     }
 
     /// <summary>
@@ -108,8 +320,34 @@ public class ActionDispatcher
     /// </summary>
     private void PreFlightCheck(string id, string? requiredType = null)
     {
-        // TODO: Check exists, visible, enabled, not busy, type matches if specified.
-        throw new NotImplementedException();
+        var element = _registry.Query(id);
+
+        if (element == null)
+            throw new ProbeActionException("NOT_FOUND", id,
+                $"Element '{id}' not found in probe registry.");
+
+        if (!_registry.IsEffectivelyVisible(id))
+            throw new ProbeActionException("NOT_VISIBLE", id,
+                $"Element '{id}' is not effectively visible (it or an ancestor is hidden).");
+
+        if (element.State.Current == "disabled")
+            throw new ProbeActionException("DISABLED", id,
+                $"Element '{id}' is disabled.");
+
+        if (element.State.Current == "loading" || element.State.Current == "submitting")
+            throw new ProbeActionException("BUSY", id,
+                $"Element '{id}' is busy (state: {element.State.Current}).");
+
+        if (requiredType != null)
+        {
+            var expectedType = Enum.TryParse<ProbeType>(requiredType, ignoreCase: true, out var parsed)
+                ? parsed
+                : (ProbeType?)null;
+
+            if (expectedType != null && element.Type != expectedType.Value)
+                throw new ProbeActionException("TYPE_MISMATCH", id,
+                    $"Element '{id}' is type {element.Type} but action requires {requiredType}.");
+        }
     }
 }
 

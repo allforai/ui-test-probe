@@ -6,7 +6,7 @@
  * updates that element's source binding with status, timing, and payload info.
  */
 
-import type { ProbeElement, NetworkLogEntry } from '../../../spec/probe-types.js';
+import type { ProbeElement, NetworkLogEntry } from '../../../../spec/probe-types.js';
 import type { ElementRegistry } from './registry.js';
 import type { EventStream } from './event-stream.js';
 
@@ -28,10 +28,61 @@ export class SourceTracker {
    * Must be called before any network requests are made that should be tracked.
    */
   install(): void {
-    // TODO: implement — monkey-patch globalThis.fetch and XMLHttpRequest.prototype.open
-    //   to record request/response info, match against registry elements by source.url,
-    //   update element source bindings, push to networkLog, emit events
-    throw new Error('Not implemented');
+    if (this.installed) return;
+    this.installed = true;
+
+    // --- Intercept fetch ---
+    this.originalFetch = globalThis.fetch;
+    const self = this;
+    globalThis.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+      const method = init?.method?.toUpperCase() ?? 'GET';
+      const startTime = Date.now();
+
+      try {
+        const response = await self.originalFetch!.call(globalThis, input, init);
+        const entry: NetworkLogEntry = {
+          url,
+          method,
+          status: response.status,
+          timestamp: startTime,
+        };
+        self.recordRequest(entry, Date.now() - startTime);
+        return response;
+      } catch (err) {
+        const entry: NetworkLogEntry = { url, method, status: 0, timestamp: startTime };
+        self.recordRequest(entry, Date.now() - startTime);
+        throw err;
+      }
+    };
+
+    // --- Intercept XMLHttpRequest ---
+    this.originalXHROpen = XMLHttpRequest.prototype.open;
+    const origSend = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.open = function (this: XMLHttpRequest, method: string, url: string | URL, ...args: unknown[]) {
+      (this as XMLHttpRequest & { __probeMethod: string; __probeUrl: string }).__probeMethod = method.toUpperCase();
+      (this as XMLHttpRequest & { __probeUrl: string }).__probeUrl = typeof url === 'string' ? url : url.toString();
+      return self.originalXHROpen!.apply(this, [method, url, ...args] as Parameters<typeof XMLHttpRequest.prototype.open>);
+    };
+
+    XMLHttpRequest.prototype.send = function (this: XMLHttpRequest & { __probeMethod?: string; __probeUrl?: string }, body?: Document | XMLHttpRequestBodyInit | null) {
+      const startTime = Date.now();
+      const xhrMethod = this.__probeMethod ?? 'GET';
+      const xhrUrl = this.__probeUrl ?? '';
+
+      this.addEventListener('loadend', () => {
+        const entry: NetworkLogEntry = {
+          url: xhrUrl,
+          method: xhrMethod,
+          status: this.status,
+          timestamp: startTime,
+        };
+        self.recordRequest(entry, Date.now() - startTime);
+      });
+
+      return origSend.call(this, body);
+    };
   }
 
   /**
@@ -78,9 +129,56 @@ export class SourceTracker {
    * @throws on timeout.
    */
   waitForSource(id: string, timeout: number = 10000): Promise<NonNullable<ProbeElement['source']>> {
-    // TODO: implement — check if source already present, otherwise subscribe
-    //   to eventStream for source-update events on this id, race against timeout
-    throw new Error('Not implemented');
+    const existing = this.getSource(id);
+    if (existing?.status) return Promise.resolve(existing);
+
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        unsub();
+        reject(new Error(`waitForSource('${id}') timed out after ${timeout}ms`));
+      }, timeout);
+
+      const unsub = this.eventStream.on(`source-update:${id}`, (event) => {
+        const source = event.detail as NonNullable<ProbeElement['source']>;
+        clearTimeout(timer);
+        unsub();
+        resolve(source);
+      });
+    });
+  }
+
+  /**
+   * Match a network request against registered elements and update source bindings.
+   */
+  private recordRequest(entry: NetworkLogEntry, responseTime: number): void {
+    // Find matching element by source URL
+    const allElements = this.registry.queryAll();
+    for (const el of allElements) {
+      if (!el.source?.url) continue;
+      // Match if request URL ends with or contains the source URL pattern
+      if (entry.url.includes(el.source.url) || entry.url.endsWith(el.source.url)) {
+        entry.elementId = el.id;
+        el.source = {
+          ...el.source,
+          status: entry.status,
+          responseTime,
+        };
+        this.eventStream.emit({
+          type: 'source-update',
+          elementId: el.id,
+          timestamp: entry.timestamp,
+          detail: el.source,
+        });
+        break;
+      }
+    }
+    this.networkLog.push(entry);
+    this.eventStream.emit({
+      type: 'network-request',
+      elementId: entry.elementId,
+      timestamp: entry.timestamp,
+      detail: entry,
+    });
   }
 
   /**

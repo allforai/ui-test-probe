@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 /**
  * Probe metadata attached to React Native components.
@@ -105,10 +105,18 @@ export function withProbe<P extends Record<string, unknown>>(
   WrappedComponent: React.ComponentType<P>,
   probeProps: ProbeProps,
 ): React.ComponentType<Omit<P, keyof NativeProbeProps>> {
-  // TODO: Return a wrapper component that:
-  //   1. Calls useProbe(probeProps) to get native props
-  //   2. Merges native props with incoming props
-  //   3. Renders WrappedComponent with merged props
-  //   4. Updates probe metadata when probeProps change
-  throw new Error('withProbe: not yet implemented');
+  const displayName = (WrappedComponent as { displayName?: string }).displayName
+    ?? (WrappedComponent as { name?: string }).name
+    ?? 'Component';
+
+  const ProbeWrapper = React.forwardRef<unknown, Omit<P, keyof NativeProbeProps>>(
+    function ProbeWrapper(props, ref) {
+      const nativeProps = useProbe(probeProps);
+      const merged = { ...props, ...nativeProps, ref } as P;
+      return React.createElement(WrappedComponent, merged);
+    },
+  );
+
+  (ProbeWrapper as { displayName?: string }).displayName = `withProbe(${displayName})`;
+  return ProbeWrapper as unknown as React.ComponentType<Omit<P, keyof NativeProbeProps>>;
 }

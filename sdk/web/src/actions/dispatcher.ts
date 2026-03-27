@@ -17,17 +17,31 @@ import type {
   LinkageResult,
   ActAndWaitResult,
   ProbeActionError,
-} from '../../../spec/probe-types.js';
+} from '../../../../spec/probe-types.js';
 import type { ElementRegistry } from '../collector/registry.js';
 import type { EventStream } from '../collector/event-stream.js';
+import type { StateObserver } from '../collector/state-observer.js';
 
 export class ActionDispatcher {
   private readonly registry: ElementRegistry;
   private readonly eventStream: EventStream;
+  private stateObserver: StateObserver | null = null;
 
   constructor(registry: ElementRegistry, eventStream: EventStream) {
     this.registry = registry;
     this.eventStream = eventStream;
+  }
+
+  /** Connect a StateObserver for waitForState in actAndWait. */
+  setStateObserver(observer: StateObserver): void {
+    this.stateObserver = observer;
+  }
+
+  /** Get DOM element from registry, throw if not found. */
+  private getDOMElement(id: string): HTMLElement {
+    const el = this.registry.getDOMElement(id);
+    if (!el) throw { error: 'NOT_FOUND', id } satisfies ProbeActionError;
+    return el as HTMLElement;
   }
 
   /**
@@ -36,158 +50,168 @@ export class ActionDispatcher {
    */
   async click(id: string): Promise<void> {
     this.preCheck(id);
-    // TODO: implement — get DOM element, dispatch click event,
-    //   check linkage, wait for linked targets if declared
-    throw new Error('Not implemented');
+    const dom = this.getDOMElement(id);
+    dom.click();
+    this.emitInteraction(id, 'click');
   }
 
-  /**
-   * Double-click a probe element.
-   */
   async doubleClick(id: string): Promise<void> {
     this.preCheck(id);
-    // TODO: implement
-    throw new Error('Not implemented');
+    const dom = this.getDOMElement(id);
+    dom.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true }));
+    this.emitInteraction(id, 'dblclick');
   }
 
-  /**
-   * Right-click (context menu) a probe element.
-   */
   async rightClick(id: string): Promise<void> {
     this.preCheck(id);
-    // TODO: implement
-    throw new Error('Not implemented');
+    const dom = this.getDOMElement(id);
+    dom.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 }));
+    this.emitInteraction(id, 'contextmenu');
   }
 
-  /**
-   * Hover over a probe element.
-   */
   async hover(id: string): Promise<void> {
     this.preCheck(id);
-    // TODO: implement
-    throw new Error('Not implemented');
+    const dom = this.getDOMElement(id);
+    dom.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    dom.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    this.emitInteraction(id, 'hover');
   }
 
-  /**
-   * Focus a probe element.
-   */
   async focus(id: string): Promise<void> {
     this.preCheck(id);
-    // TODO: implement
-    throw new Error('Not implemented');
+    const dom = this.getDOMElement(id);
+    dom.focus();
+    this.emitInteraction(id, 'focus');
   }
 
-  /**
-   * Type text into a form element character by character.
-   * Pre-checks: exists, visible, not disabled.
-   */
   async type(id: string, text: string): Promise<void> {
     this.preCheck(id);
-    // TODO: implement — dispatch keydown/keypress/keyup for each char
-    throw new Error('Not implemented');
+    const dom = this.getDOMElement(id) as HTMLInputElement;
+    for (const char of text) {
+      dom.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }));
+      dom.dispatchEvent(new KeyboardEvent('keypress', { key: char, bubbles: true }));
+      dom.value += char;
+      dom.dispatchEvent(new Event('input', { bubbles: true }));
+      dom.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
+    }
+    this.emitInteraction(id, 'type');
   }
 
-  /**
-   * Fill a form element with a value (replaces existing content).
-   * Pre-checks: exists, visible, not disabled.
-   */
   async fill(id: string, value: string): Promise<void> {
     this.preCheck(id);
-    // TODO: implement — set value property, dispatch input + change events
-    throw new Error('Not implemented');
+    const dom = this.getDOMElement(id) as HTMLInputElement;
+    // Use native setter to work with React controlled components
+    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype, 'value'
+    )?.set ?? Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set;
+    if (nativeInputValueSetter) {
+      nativeInputValueSetter.call(dom, value);
+    } else {
+      dom.value = value;
+    }
+    dom.dispatchEvent(new Event('input', { bubbles: true }));
+    dom.dispatchEvent(new Event('change', { bubbles: true }));
+    this.emitInteraction(id, 'fill');
   }
 
-  /**
-   * Clear a form element's value.
-   */
   async clear(id: string): Promise<void> {
-    this.preCheck(id);
-    // TODO: implement
-    throw new Error('Not implemented');
+    await this.fill(id, '');
   }
 
-  /**
-   * Select an option from a selector element.
-   * Additional pre-check: value must exist in data.options.
-   */
   async select(id: string, value: string): Promise<void> {
     const element = this.preCheck(id);
-
-    // Verify option exists
     if (element.data?.options && !element.data.options.includes(value)) {
-      const err: ProbeActionError = {
+      throw {
         error: 'OPTION_NOT_FOUND',
         id,
         available: element.data.options,
-      };
-      throw err;
+      } satisfies ProbeActionError;
     }
 
-    // TODO: implement — set select value, dispatch change event,
-    //   check linkage targets
-    throw new Error('Not implemented');
+    const dom = this.getDOMElement(id) as HTMLSelectElement;
+    dom.value = value;
+    dom.dispatchEvent(new Event('change', { bubbles: true }));
+    dom.dispatchEvent(new Event('input', { bubbles: true }));
+    this.emitInteraction(id, 'select');
   }
 
-  /**
-   * Check or uncheck a checkbox/radio element.
-   */
   async check(id: string, checked: boolean): Promise<void> {
     this.preCheck(id);
-    // TODO: implement
-    throw new Error('Not implemented');
+    const dom = this.getDOMElement(id) as HTMLInputElement;
+    dom.checked = checked;
+    dom.dispatchEvent(new Event('change', { bubbles: true }));
+    dom.dispatchEvent(new Event('input', { bubbles: true }));
+    this.emitInteraction(id, 'check');
   }
 
-  /**
-   * Scroll a scrollable element to a specific position.
-   */
   async scrollTo(id: string, position: { top?: number; left?: number }): Promise<void> {
     this.preCheck(id);
-    // TODO: implement — element.scrollTo()
-    throw new Error('Not implemented');
+    const dom = this.getDOMElement(id);
+    dom.scrollTo({ top: position.top, left: position.left, behavior: 'instant' });
+    this.emitInteraction(id, 'scrollTo');
   }
 
-  /**
-   * Scroll a scrollable element to its bottom.
-   */
   async scrollToBottom(id: string): Promise<void> {
     this.preCheck(id);
-    // TODO: implement — element.scrollTop = element.scrollHeight
-    throw new Error('Not implemented');
+    const dom = this.getDOMElement(id);
+    dom.scrollTop = dom.scrollHeight;
+    this.emitInteraction(id, 'scrollToBottom');
   }
 
-  /**
-   * Scroll the page so that the element is visible in the viewport.
-   */
   async scrollIntoView(id: string): Promise<void> {
     this.preCheck(id);
-    // TODO: implement — element.scrollIntoView({ behavior: 'smooth' })
-    throw new Error('Not implemented');
+    const dom = this.getDOMElement(id);
+    dom.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    this.emitInteraction(id, 'scrollIntoView');
   }
 
-  /**
-   * Drag an element to another element's position.
-   */
   async drag(sourceId: string, targetId: string): Promise<void> {
     this.preCheck(sourceId);
     this.preCheck(targetId);
-    // TODO: implement — dispatch dragstart, dragover, drop sequence
-    throw new Error('Not implemented');
+    const sourceDom = this.getDOMElement(sourceId);
+    const targetDom = this.getDOMElement(targetId);
+
+    const sourceRect = sourceDom.getBoundingClientRect();
+    const targetRect = targetDom.getBoundingClientRect();
+
+    sourceDom.dispatchEvent(new DragEvent('dragstart', {
+      bubbles: true,
+      clientX: sourceRect.x + sourceRect.width / 2,
+      clientY: sourceRect.y + sourceRect.height / 2,
+    }));
+    targetDom.dispatchEvent(new DragEvent('dragover', {
+      bubbles: true,
+      clientX: targetRect.x + targetRect.width / 2,
+      clientY: targetRect.y + targetRect.height / 2,
+    }));
+    targetDom.dispatchEvent(new DragEvent('drop', {
+      bubbles: true,
+      clientX: targetRect.x + targetRect.width / 2,
+      clientY: targetRect.y + targetRect.height / 2,
+    }));
+    sourceDom.dispatchEvent(new DragEvent('dragend', { bubbles: true }));
+    this.emitInteraction(sourceId, 'drag');
   }
 
-  /**
-   * Press a keyboard shortcut.
-   */
   async pressShortcut(key: string): Promise<void> {
-    // TODO: implement — parse key combo (e.g. "Ctrl+S"), dispatch keydown on document
-    throw new Error('Not implemented');
+    const parts = key.split('+').map(p => p.trim());
+    const keyName = parts.pop()!;
+    const ctrlKey = parts.some(p => p.toLowerCase() === 'ctrl' || p.toLowerCase() === 'control');
+    const shiftKey = parts.some(p => p.toLowerCase() === 'shift');
+    const altKey = parts.some(p => p.toLowerCase() === 'alt');
+    const metaKey = parts.some(p => p.toLowerCase() === 'meta' || p.toLowerCase() === 'cmd');
+
+    document.dispatchEvent(new KeyboardEvent('keydown', {
+      key: keyName, ctrlKey, shiftKey, altKey, metaKey, bubbles: true,
+    }));
+    document.dispatchEvent(new KeyboardEvent('keyup', {
+      key: keyName, ctrlKey, shiftKey, altKey, metaKey, bubbles: true,
+    }));
   }
 
-  /**
-   * Navigate to a route.
-   */
   async navigate(route: string): Promise<void> {
-    // TODO: implement — window.history.pushState or location change
-    throw new Error('Not implemented');
+    window.history.pushState({}, '', route);
+    window.dispatchEvent(new PopStateEvent('popstate'));
   }
 
   /**
@@ -198,23 +222,138 @@ export class ActionDispatcher {
    * @returns Full linkage verification result including direct, chained, and API effects.
    */
   async verifyLinkage(triggerId: string, action: string): Promise<LinkageResult> {
-    // TODO: implement — read linkage from element, wait for each target's expected
-    //   state change, track API calls, follow chain paths
-    throw new Error('Not implemented');
+    const element = this.registry.query(triggerId);
+    const result: LinkageResult = {
+      trigger: triggerId,
+      action,
+      directEffects: [],
+      chainedEffects: [],
+      apiCalls: [],
+    };
+    if (!element?.linkage?.targets.length) return result;
+
+    const timeout = 5000;
+    for (const target of element.linkage.targets) {
+      const start = Date.now();
+      const isChain = target.path.type === 'chain';
+
+      try {
+        // Wait for state change on target
+        await this.eventStream.waitFor(
+          `state-change:${target.id}`,
+          undefined,
+          timeout,
+        );
+        const duration = Date.now() - start;
+
+        if (isChain) {
+          result.chainedEffects.push({
+            target: target.id,
+            effect: target.effect,
+            through: (target.path as { through: string }).through,
+            result: 'pass',
+            duration,
+          });
+        } else {
+          result.directEffects.push({
+            target: target.id,
+            effect: target.effect,
+            result: 'pass',
+            duration,
+          });
+        }
+
+        // Track API calls for api-type paths
+        if (target.path.type === 'api') {
+          const apiPath = target.path as { url: string; method?: string };
+          result.apiCalls.push({
+            url: apiPath.url,
+            method: apiPath.method ?? 'GET',
+            status: this.registry.query(target.id)?.source?.status ?? 0,
+            responseTime: duration,
+          });
+        }
+      } catch {
+        const duration = Date.now() - start;
+        if (isChain) {
+          result.chainedEffects.push({
+            target: target.id,
+            effect: target.effect,
+            through: (target.path as { through: string }).through,
+            result: 'timeout',
+            duration,
+          });
+        } else {
+          result.directEffects.push({
+            target: target.id,
+            effect: target.effect,
+            result: 'timeout',
+            duration,
+          });
+        }
+      }
+    }
+    return result;
   }
 
-  /**
-   * Perform an action, wait for a target to reach a state, and optionally verify linkage.
-   * Combines action dispatch + wait + linkage verification in one call.
-   */
   async actAndWait(
     id: string,
     action: string,
     waitFor: { target?: string; state?: string; timeout?: number },
   ): Promise<ActAndWaitResult> {
-    // TODO: implement — dispatch action, start timer, waitForState on target,
-    //   verify linkage if declared, measure durations
-    throw new Error('Not implemented');
+    const timeout = waitFor.timeout ?? 10000;
+    const actionStart = Date.now();
+
+    // Parse and dispatch the action
+    const [actionName, ...actionArgs] = action.split(':');
+    const method = (this as Record<string, unknown>)[actionName!] as
+      | ((id: string, ...args: string[]) => Promise<void>)
+      | undefined;
+
+    if (typeof method === 'function') {
+      if (actionArgs.length > 0) {
+        await method.call(this, id, actionArgs.join(':'));
+      } else {
+        await method.call(this, id);
+      }
+    } else {
+      throw new Error(`Unknown action: ${actionName}`);
+    }
+
+    const actionDuration = Date.now() - actionStart;
+    const waitStart = Date.now();
+
+    // Wait for target state if specified
+    if (waitFor.target && waitFor.state && this.stateObserver) {
+      await this.stateObserver.waitForState(waitFor.target, waitFor.state, timeout);
+    }
+
+    const waitDuration = Date.now() - waitStart;
+    const targetId = waitFor.target ?? id;
+    const targetElement = this.registry.query(targetId);
+
+    // Auto-verify linkage if declared
+    let linkageResults: LinkageResult | undefined;
+    const element = this.registry.query(id);
+    if (element?.linkage?.targets.length) {
+      linkageResults = await this.verifyLinkage(id, action);
+    }
+
+    return {
+      actionDuration,
+      waitDuration,
+      targetState: targetElement?.state ?? { current: 'unknown', timestamp: Date.now() },
+      linkageResults,
+    };
+  }
+
+  private emitInteraction(id: string, action: string): void {
+    this.eventStream.emit({
+      type: 'interaction',
+      elementId: id,
+      timestamp: Date.now(),
+      detail: { action },
+    });
   }
 
   /**

@@ -14,20 +14,23 @@
  * from Playwright's page.evaluate().
  */
 
-import type {
-  UITestProbe,
-  ProbeElement,
+import {
   ProbeType,
-  PlatformContext,
-  ViewportPreset,
-  ProbeSnapshot,
-  SnapshotDiff,
-  LinkageResult,
-  NetworkLogEntry,
-  TestResult,
-  ActAndWaitResult,
-  PageQueryResult,
-} from '../../spec/probe-types.js';
+  Platform,
+  InputMode,
+  type UITestProbe,
+  type ProbeElement,
+  type PlatformContext,
+  type ViewportPreset,
+  type DeviceProfile,
+  type ProbeSnapshot,
+  type SnapshotDiff,
+  type LinkageResult,
+  type NetworkLogEntry,
+  type TestResult,
+  type ActAndWaitResult,
+  type PageQueryResult,
+} from '../../../spec/probe-types.js';
 
 import { AnnotationParser } from './annotations/parser.js';
 import { ElementRegistry } from './collector/registry.js';
@@ -37,7 +40,7 @@ import { LayoutTracker } from './collector/layout-tracker.js';
 import { EventStream } from './collector/event-stream.js';
 import { ActionDispatcher } from './actions/dispatcher.js';
 
-import devices from '../../spec/devices.json';
+import devices from '../../../spec/devices.json';
 
 export interface WebProbeConfig {
   /** Automatically scan the DOM on construction. Defaults to true. */
@@ -83,6 +86,7 @@ export class WebProbe implements UITestProbe {
     this.sourceTracker = new SourceTracker(this.registry, this.eventStream);
     this.layoutTracker = new LayoutTracker(this.registry);
     this.dispatcher = new ActionDispatcher(this.registry, this.eventStream);
+    this.dispatcher.setStateObserver(this.stateObserver);
 
     if (autoScan && typeof document !== 'undefined') {
       this.registry.scan();
@@ -113,9 +117,19 @@ export class WebProbe implements UITestProbe {
   }
 
   queryPage(): PageQueryResult {
-    // TODO: implement — find PAGE-type element, collect all elements,
-    //   identify unready elements (state !== 'loaded')
-    throw new Error('Not implemented');
+    const pages = this.registry.queryAll(ProbeType.PAGE);
+    const page = pages[0];
+    const allElements = this.registry.queryAll();
+    const unreadyElements = allElements
+      .filter(el => el.state.current === 'loading' || el.state.current === 'submitting')
+      .map(el => el.id);
+
+    return {
+      id: page?.id ?? 'unknown',
+      state: page?.state.current ?? (unreadyElements.length === 0 ? 'loaded' : 'loading'),
+      elements: allElements,
+      unreadyElements,
+    };
   }
 
   // =========================================================================
@@ -124,35 +138,78 @@ export class WebProbe implements UITestProbe {
 
   async setPlatformContext(context: PlatformContext): Promise<void> {
     this.platformContext = context;
-    // TODO: implement — apply viewport size if in browser
+    if (typeof window !== 'undefined' && context.viewport) {
+      // In a real browser context, resizing is handled by the test framework (Playwright)
+      // This stores the context for query purposes
+    }
   }
 
   getPlatformContext(): PlatformContext {
-    if (!this.platformContext) {
-      // Return default based on current browser environment
-      // TODO: implement — detect platform, viewport, device from navigator/screen
-      throw new Error('Not implemented — call setPlatformContext() or setDevice() first');
-    }
-    return this.platformContext;
+    if (this.platformContext) return this.platformContext;
+
+    // Auto-detect from browser environment
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    let platform = Platform.WEB_CHROME;
+    if (ua.includes('Firefox')) platform = Platform.WEB_FIREFOX;
+    else if (ua.includes('Safari') && !ua.includes('Chrome')) platform = Platform.WEB_SAFARI;
+
+    const width = typeof window !== 'undefined' ? window.innerWidth : 1920;
+    const height = typeof window !== 'undefined' ? window.innerHeight : 1080;
+    const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio : 1;
+
+    return {
+      platform,
+      device: {
+        name: 'current-browser',
+        screenSize: { width, height },
+        pixelRatio,
+        hasNotch: false,
+        hasSafeArea: false,
+        formFactor: width < 768 ? 'phone' : width < 1024 ? 'tablet' : 'desktop',
+      },
+      viewport: { width, height },
+      inputMode: InputMode.MOUSE_KEYBOARD,
+    };
   }
 
   async setDevice(preset: ViewportPreset | string): Promise<void> {
-    const deviceMap = (devices as { devices: Record<string, unknown> }).devices;
+    const deviceMap = (devices as { devices: Record<string, DeviceProfile> }).devices;
     const device = deviceMap[preset];
     if (!device) {
       throw new Error(`Unknown device preset: ${preset}. Available: ${Object.keys(deviceMap).join(', ')}`);
     }
-    // TODO: implement — build PlatformContext from device preset,
-    //   call setPlatformContext, resize viewport
-    throw new Error('Not implemented');
+
+    const formFactor = device.formFactor;
+    const context: PlatformContext = {
+      platform: Platform.WEB_CHROME,
+      device,
+      viewport: { width: device.screenSize.width, height: device.screenSize.height },
+      inputMode: formFactor === 'phone' || formFactor === 'tablet' ? InputMode.TOUCH : InputMode.MOUSE_KEYBOARD,
+    };
+    await this.setPlatformContext(context);
   }
 
   async runAcrossDevices(
     deviceList: Array<ViewportPreset | string>,
     test: (probe: UITestProbe) => Promise<void>,
   ): Promise<Record<string, TestResult>> {
-    // TODO: implement — for each device, setDevice(), run test(), collect results
-    throw new Error('Not implemented');
+    const results: Record<string, TestResult> = {};
+    for (const deviceName of deviceList) {
+      const start = Date.now();
+      try {
+        await this.setDevice(deviceName);
+        await test(this);
+        results[deviceName] = { device: deviceName, passed: true, duration: Date.now() - start };
+      } catch (err) {
+        results[deviceName] = {
+          device: deviceName,
+          passed: false,
+          duration: Date.now() - start,
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+    }
+    return results;
   }
 
   // =========================================================================
@@ -229,9 +286,48 @@ export class WebProbe implements UITestProbe {
   }
 
   async waitForPageReady(timeout: number = 30000): Promise<void> {
-    // TODO: implement — wait for all registered elements to leave 'loading' state,
-    //   or for PAGE element to reach 'loaded'
-    throw new Error('Not implemented');
+    const deadline = Date.now() + timeout;
+
+    // First, wait for any PAGE element to reach 'loaded'
+    const pages = this.registry.queryAll(ProbeType.PAGE);
+    if (pages.length > 0) {
+      const page = pages[0]!;
+      if (page.state.current !== 'loaded') {
+        const remaining = deadline - Date.now();
+        if (remaining <= 0) throw new Error('waitForPageReady timed out');
+        await this.stateObserver.waitForState(page.id, 'loaded', remaining);
+      }
+      return;
+    }
+
+    // No PAGE element — wait for all elements to leave loading/submitting state
+    const poll = (): Promise<void> => {
+      const unready = this.registry.queryAll().filter(
+        el => el.state.current === 'loading' || el.state.current === 'submitting'
+      );
+      if (unready.length === 0) return Promise.resolve();
+
+      if (Date.now() >= deadline) {
+        throw new Error(`waitForPageReady timed out. Still loading: ${unready.map(e => e.id).join(', ')}`);
+      }
+
+      // Wait for any state change, then re-check
+      return new Promise((resolve, reject) => {
+        const remaining = deadline - Date.now();
+        const timer = setTimeout(() => {
+          unsub();
+          reject(new Error(`waitForPageReady timed out. Still loading: ${unready.map(e => e.id).join(', ')}`));
+        }, remaining);
+
+        const unsub = this.eventStream.on('state-change', () => {
+          clearTimeout(timer);
+          unsub();
+          resolve(poll());
+        });
+      });
+    };
+
+    return poll();
   }
 
   onStateChange(
@@ -308,7 +404,7 @@ export class WebProbe implements UITestProbe {
   snapshot(): ProbeSnapshot {
     const elements: Record<string, ProbeElement> = {};
     for (const el of this.registry.queryAll()) {
-      elements[el.id] = { ...el };
+      elements[el.id] = structuredClone ? structuredClone(el) : JSON.parse(JSON.stringify(el));
     }
     return {
       timestamp: Date.now(),
@@ -318,9 +414,33 @@ export class WebProbe implements UITestProbe {
   }
 
   diff(a: ProbeSnapshot, b: ProbeSnapshot): SnapshotDiff[] {
-    // TODO: implement — deep compare elements across snapshots,
-    //   return array of field-level diffs
-    throw new Error('Not implemented');
+    const diffs: SnapshotDiff[] = [];
+    const allIds = new Set([...Object.keys(a.elements), ...Object.keys(b.elements)]);
+
+    for (const id of allIds) {
+      const elA = a.elements[id];
+      const elB = b.elements[id];
+
+      if (!elA) {
+        diffs.push({ elementId: id, field: '_existence', before: undefined, after: 'added' });
+        continue;
+      }
+      if (!elB) {
+        diffs.push({ elementId: id, field: '_existence', before: 'present', after: undefined });
+        continue;
+      }
+
+      // Compare key fields
+      const fields: (keyof ProbeElement)[] = ['state', 'data', 'source', 'layout', 'linkage'];
+      for (const field of fields) {
+        const valA = JSON.stringify(elA[field]);
+        const valB = JSON.stringify(elB[field]);
+        if (valA !== valB) {
+          diffs.push({ elementId: id, field, before: elA[field], after: elB[field] });
+        }
+      }
+    }
+    return diffs;
   }
 
   async verifyLinkage(triggerId: string, action: string): Promise<LinkageResult> {

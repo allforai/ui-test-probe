@@ -27,7 +27,6 @@ import type {
   SnapshotDiff,
   LinkageResult,
   NetworkLogEntry,
-  TestResult,
   ActAndWaitResult,
   PageQueryResult,
 } from '../../../spec/probe-types.js';

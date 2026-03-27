@@ -13,6 +13,27 @@ public class ProbeDriver
 {
     private readonly ProbeRegistry _registry;
     private readonly ActionDispatcher _dispatcher;
+    private Microsoft.Maui.Controls.VisualElement? _root;
+    private string? _currentDevice;
+
+    /// <summary>
+    /// Well-known device dimensions keyed by preset name.
+    /// Tuple: (Width, Height, PixelRatio, FormFactor).
+    /// </summary>
+    private static readonly Dictionary<string, (int Width, int Height, double PixelRatio, string FormFactor)> DeviceDimensions = new()
+    {
+        [DevicePreset.IPhoneSe] = (375, 667, 2.0, "phone"),
+        [DevicePreset.IPhone15Pro] = (393, 852, 3.0, "phone"),
+        [DevicePreset.IPadAir] = (820, 1180, 2.0, "tablet"),
+        [DevicePreset.IPadPro12] = (1024, 1366, 2.0, "tablet"),
+        [DevicePreset.Pixel8] = (412, 924, 2.625, "phone"),
+        [DevicePreset.GalaxyS24] = (360, 780, 3.0, "phone"),
+        [DevicePreset.GalaxyTabS9] = (800, 1280, 1.5, "tablet"),
+        [DevicePreset.GalaxyFold] = (344, 882, 3.0, "foldable"),
+        [DevicePreset.MacBookAir13] = (1470, 956, 2.0, "desktop"),
+        [DevicePreset.Desktop1080p] = (1920, 1080, 1.0, "desktop"),
+        [DevicePreset.Desktop1440p] = (2560, 1440, 1.0, "desktop"),
+    };
 
     /// <summary>
     /// Initializes the probe driver for a running MAUI application.
@@ -23,10 +44,33 @@ public class ProbeDriver
     {
         _registry = new ProbeRegistry();
         _dispatcher = new ActionDispatcher(_registry);
-        // TODO: Obtain root page from app, run initial Scan().
+
+        // Obtain root page from the MAUI Application
+        if (app is Microsoft.Maui.Controls.Application mauiApp)
+        {
+            _root = mauiApp.MainPage;
+        }
+        else if (app is Microsoft.Maui.Controls.VisualElement visualElement)
+        {
+            _root = visualElement;
+        }
+
+        if (_root != null)
+        {
+            _registry.Scan(_root);
+        }
     }
 
-    // ── Element Registry ──
+    /// <summary>
+    /// Re-scans the visual tree. Useful after navigation or layout changes.
+    /// </summary>
+    public void Rescan()
+    {
+        if (_root != null)
+            _registry.Scan(_root);
+    }
+
+    // -- Element Registry --
 
     /// <summary>
     /// Queries a single probe element by ID. Returns a snapshot of
@@ -36,8 +80,7 @@ public class ProbeDriver
     /// <returns>ProbeElement snapshot, or null if not registered.</returns>
     public ProbeElement? Query(string id)
     {
-        // TODO: Delegate to registry.Query(id).
-        throw new NotImplementedException();
+        return _registry.Query(id);
     }
 
     /// <summary>
@@ -45,11 +88,10 @@ public class ProbeDriver
     /// </summary>
     public IReadOnlyList<ProbeElement> QueryAll(ProbeType? type = null)
     {
-        // TODO: Delegate to registry.QueryAll(type).
-        throw new NotImplementedException();
+        return _registry.QueryAll(type);
     }
 
-    // ── Event Stream / Waiting ──
+    // -- Event Stream / Waiting --
 
     /// <summary>
     /// Blocks until the page-level probe element reports "loaded" state
@@ -59,11 +101,25 @@ public class ProbeDriver
     /// <exception cref="TimeoutException">If page is not ready within timeout.</exception>
     public void WaitForPageReady(int timeoutMs = 10000)
     {
-        // TODO: 1. Find Page-type element
-        //       2. Poll/subscribe until state == "loaded"
-        //       3. Check all elements for non-loading state
-        //       4. Throw on timeout
-        throw new NotImplementedException();
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (DateTime.UtcNow < deadline)
+        {
+            // Re-scan to pick up dynamic element changes
+            if (_root != null)
+                _registry.Scan(_root);
+
+            var page = _registry.QueryPage();
+            if (page.State == "loaded" && page.UnreadyElements.Count == 0)
+                return;
+
+            Thread.Sleep(50);
+        }
+
+        var finalSummary = _registry.QueryPage();
+        throw new TimeoutException(
+            $"Page not ready within {timeoutMs}ms. " +
+            $"Page state: '{finalSummary.State}'. " +
+            $"Unready elements: [{string.Join(", ", finalSummary.UnreadyElements)}]");
     }
 
     /// <summary>
@@ -74,19 +130,29 @@ public class ProbeDriver
     /// <param name="timeoutMs">Maximum wait time in milliseconds.</param>
     public void WaitFor(string id, string state, int timeoutMs = 5000)
     {
-        // TODO: Subscribe to state changes, block until match or timeout.
-        throw new NotImplementedException();
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (DateTime.UtcNow < deadline)
+        {
+            var el = _registry.Query(id);
+            if (el?.State.Current == state) return;
+            Thread.Sleep(50);
+        }
+
+        var finalElement = _registry.Query(id);
+        var currentState = finalElement?.State.Current ?? "not found";
+        throw new TimeoutException(
+            $"Element '{id}' did not reach state '{state}' within {timeoutMs}ms. " +
+            $"Current state: '{currentState}'.");
     }
 
-    // ── Action Dispatch ──
+    // -- Action Dispatch --
 
     /// <summary>
     /// Performs a tap action on the specified probe element.
     /// </summary>
     public void Tap(string id)
     {
-        // TODO: Delegate to dispatcher.Click(id).
-        throw new NotImplementedException();
+        _dispatcher.Click(id).GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -94,8 +160,7 @@ public class ProbeDriver
     /// </summary>
     public void Fill(string id, string value)
     {
-        // TODO: Delegate to dispatcher.Fill(id, value).
-        throw new NotImplementedException();
+        _dispatcher.Fill(id, value).GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -114,8 +179,8 @@ public class ProbeDriver
         string expectedState = "loaded",
         int timeoutMs = 5000)
     {
-        // TODO: Delegate to dispatcher.ActAndWait(...).
-        throw new NotImplementedException();
+        _dispatcher.ActAndWait(probeId, action, target, expectedState, timeoutMs)
+            .GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -124,11 +189,10 @@ public class ProbeDriver
     /// </summary>
     public LinkageResult VerifyLinkage(string probeId, string action)
     {
-        // TODO: Delegate to dispatcher.VerifyLinkage(probeId, action).
-        throw new NotImplementedException();
+        return _dispatcher.VerifyLinkage(probeId, action).GetAwaiter().GetResult();
     }
 
-    // ── Visibility ──
+    // -- Visibility --
 
     /// <summary>
     /// Checks effective visibility by walking the ancestor chain.
@@ -136,8 +200,7 @@ public class ProbeDriver
     /// </summary>
     public bool IsEffectivelyVisible(string id)
     {
-        // TODO: Delegate to registry.IsEffectivelyVisible(id).
-        throw new NotImplementedException();
+        return _registry.IsEffectivelyVisible(id);
     }
 
     /// <summary>
@@ -149,7 +212,7 @@ public class ProbeDriver
         return el != null && IsEffectivelyVisible(id);
     }
 
-    // ── Device Presets ──
+    // -- Device Presets --
 
     /// <summary>
     /// Configures the test window to match a built-in device preset.
@@ -158,9 +221,26 @@ public class ProbeDriver
     /// <param name="preset">Device preset name (e.g., "desktop-1080p", "ipad-air").</param>
     public void SetDevice(string preset)
     {
-        // TODO: Look up device preset, resize application window,
-        //       re-scan visual tree after layout change.
-        throw new NotImplementedException();
+        if (!DeviceDimensions.TryGetValue(preset, out var dimensions))
+            throw new ArgumentException(
+                $"Unknown device preset '{preset}'. " +
+                $"Known presets: {string.Join(", ", DeviceDimensions.Keys)}");
+
+        _currentDevice = preset;
+
+        // Resize the MAUI application window if running in a windowed context
+        if (_root != null)
+        {
+            var window = _root is Microsoft.Maui.Controls.Page page ? page.Window : null;
+            if (window != null)
+            {
+                window.Width = dimensions.Width;
+                window.Height = dimensions.Height;
+            }
+        }
+
+        // Re-scan after layout change so layout metrics are refreshed
+        Rescan();
     }
 
     /// <summary>
@@ -174,8 +254,26 @@ public class ProbeDriver
         IReadOnlyList<string> devices,
         Action<ProbeDriver> test)
     {
-        // TODO: For each device: SetDevice, re-scan, run test, capture result.
-        throw new NotImplementedException();
+        var results = new Dictionary<string, TestResult>();
+
+        foreach (var device in devices)
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                SetDevice(device);
+                test(this);
+                sw.Stop();
+                results[device] = new TestResult { Passed = true, DurationMs = sw.Elapsed.TotalMilliseconds };
+            }
+            catch (Exception ex)
+            {
+                sw.Stop();
+                results[device] = new TestResult { Passed = false, Error = ex.Message, DurationMs = sw.Elapsed.TotalMilliseconds };
+            }
+        }
+
+        return results;
     }
 }
 

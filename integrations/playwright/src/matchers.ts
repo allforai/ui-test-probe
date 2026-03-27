@@ -43,15 +43,27 @@ export async function toHaveProbeState(
   //   On pass: message should say "Expected <id> not to have state <expected>"
   //   On fail: message should say "Expected <id> to have state <expected>, got <actual>"
 
-  const state = await probe.getState(id);
-  const actual = state?.current;
-  const pass = actual === expectedState;
+  const timeout = options?.timeout ?? 0;
+  const deadline = Date.now() + timeout;
+  let actual: string | undefined;
+
+  do {
+    const state = await probe.getState(id);
+    actual = state?.current;
+    if (actual === expectedState) {
+      return {
+        pass: true,
+        message: () => `Expected element "${id}" not to have state "${expectedState}"`,
+      };
+    }
+    if (timeout > 0 && Date.now() < deadline) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+  } while (Date.now() < deadline);
 
   return {
-    pass,
-    message: () => pass
-      ? `Expected element "${id}" not to have state "${expectedState}"`
-      : `Expected element "${id}" to have state "${expectedState}", but got "${actual ?? 'undefined'}"`,
+    pass: false,
+    message: () => `Expected element "${id}" to have state "${expectedState}", but got "${actual ?? 'undefined'}"`,
   };
 }
 

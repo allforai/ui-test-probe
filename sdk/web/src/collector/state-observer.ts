@@ -6,7 +6,6 @@
  * promise-based waitForState() for test synchronization.
  */
 
-import type { ProbeElement } from '../../../spec/probe-types.js';
 import type { ElementRegistry } from './registry.js';
 import type { EventStream } from './event-stream.js';
 
@@ -34,9 +33,40 @@ export class StateObserver {
    * @param root - The DOM subtree root to observe. Defaults to document.body.
    */
   observe(root: Element = document.body): void {
-    // TODO: implement — MutationObserver on attributes, filter data-probe-state,
-    //   read old/new value, call registry.updateState(), emit to eventStream
-    throw new Error('Not implemented');
+    this.disconnect();
+    this.observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type !== 'attributes' || mutation.attributeName !== 'data-probe-state') continue;
+        const el = mutation.target as Element;
+        const id = el.getAttribute('data-probe-id');
+        if (!id) continue;
+
+        const newState = el.getAttribute('data-probe-state') ?? 'idle';
+        const oldState = mutation.oldValue ?? 'unknown';
+
+        if (oldState === newState) continue;
+
+        const timestamp = Date.now();
+        this.registry.updateState(id, {
+          current: newState,
+          previous: oldState,
+          timestamp,
+        });
+
+        this.eventStream.emit({
+          type: 'state-change',
+          elementId: id,
+          timestamp,
+          detail: { oldState, newState } satisfies Omit<StateChangeEvent, 'id' | 'timestamp'>,
+        });
+      }
+    });
+    this.observer.observe(root, {
+      attributes: true,
+      attributeFilter: ['data-probe-state'],
+      attributeOldValue: true,
+      subtree: true,
+    });
   }
 
   /**
@@ -57,9 +87,25 @@ export class StateObserver {
    * @throws on timeout.
    */
   waitForState(id: string, state: string, timeout: number = 10000): Promise<void> {
-    // TODO: implement — check current state, if match resolve immediately,
-    //   otherwise subscribe to eventStream and race against timeout
-    throw new Error('Not implemented');
+    // Check current state first
+    const current = this.registry.query(id);
+    if (current?.state.current === state) return Promise.resolve();
+
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        unsub();
+        reject(new Error(`waitForState('${id}', '${state}') timed out after ${timeout}ms`));
+      }, timeout);
+
+      const unsub = this.eventStream.on(`state-change:${id}`, (event) => {
+        const detail = event.detail as { newState: string };
+        if (detail.newState === state) {
+          clearTimeout(timer);
+          unsub();
+          resolve();
+        }
+      });
+    });
   }
 
   /**
@@ -73,7 +119,9 @@ export class StateObserver {
     id: string,
     callback: (oldState: string, newState: string) => void,
   ): () => void {
-    // TODO: implement — subscribe to eventStream filtered by id
-    throw new Error('Not implemented');
+    return this.eventStream.on(`state-change:${id}`, (event) => {
+      const detail = event.detail as { oldState: string; newState: string };
+      callback(detail.oldState, detail.newState);
+    });
   }
 }

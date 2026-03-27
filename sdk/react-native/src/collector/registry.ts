@@ -16,38 +16,50 @@ export class ElementRegistry {
   private elements: Map<string, ProbeElement> = new Map();
 
   /**
+   * Registers a probe element directly (called by useProbe hook at mount time).
+   * This is the primary registration path in React Native since there is no
+   * DOM to scan -- components self-register via the useProbe hook side-effect.
+   */
+  register(element: ProbeElement): void {
+    this.elements.set(element.id, element);
+  }
+
+  /**
+   * Removes a probe element from the registry (called on unmount).
+   */
+  unregister(id: string): void {
+    this.elements.delete(id);
+  }
+
+  /**
    * Scans the accessibility tree for probe-annotated elements.
-   * On iOS, reads accessibilityLabel/accessibilityHint.
-   * On Android, reads contentDescription and extras.
+   * In React Native, components self-register via useProbe, so scan()
+   * returns the count of currently registered elements. If a NativeModule
+   * bridge is available, it can additionally traverse the native tree.
    *
    * @returns Number of probe elements discovered.
    */
   async scan(): Promise<number> {
-    // TODO: 1. Call NativeModule to traverse accessibility tree
-    //       2. For each node with accessibilityLabel starting with "probe:":
-    //          a. Parse probe ID from label
-    //          b. Deserialize metadata from accessibilityHint
-    //          c. Read layout bounds from native node
-    //          d. Construct ProbeElement
-    //       3. Register in this.elements map
-    throw new Error('ElementRegistry.scan: not yet implemented');
+    // In React Native, elements self-register via the useProbe hook.
+    // scan() acts as a checkpoint returning the current count.
+    // A native module bridge could augment this in the future.
+    return this.elements.size;
   }
 
   /**
    * Returns a single probe element by ID, or null if not found.
-   * Refreshes the element's runtime state before returning.
    */
   query(id: string): ProbeElement | null {
-    // TODO: Look up in registry, refresh runtime state (layout, data values).
-    throw new Error('ElementRegistry.query: not yet implemented');
+    return this.elements.get(id) ?? null;
   }
 
   /**
    * Returns all registered elements, optionally filtered by type.
    */
   queryAll(type?: ProbeType): ProbeElement[] {
-    // TODO: Filter elements map by type, refresh state.
-    throw new Error('ElementRegistry.queryAll: not yet implemented');
+    const all = Array.from(this.elements.values());
+    if (!type) return all;
+    return all.filter((el) => el.type === type);
   }
 
   /**
@@ -60,24 +72,45 @@ export class ElementRegistry {
     elements: ProbeElement[];
     unreadyElements: string[];
   } {
-    // TODO: Find page-type element, collect all, identify unready.
-    throw new Error('ElementRegistry.queryPage: not yet implemented');
+    const all = this.queryAll();
+    const page = all.find((el) => el.type === 'page');
+    const unreadyElements = all
+      .filter((el) => el.state.current === 'loading' || el.state.current === 'submitting')
+      .map((el) => el.id);
+
+    return {
+      id: page?.id ?? 'unknown',
+      state: page?.state.current ?? (unreadyElements.length === 0 ? 'loaded' : 'loading'),
+      elements: all,
+      unreadyElements,
+    };
   }
 
   /**
    * Returns direct children of the specified element.
    */
   queryChildren(id: string): ProbeElement[] {
-    // TODO: Use parent/children hierarchy.
-    throw new Error('ElementRegistry.queryChildren: not yet implemented');
+    const el = this.elements.get(id);
+    if (!el?.children) return [];
+    return el.children
+      .map((childId) => this.elements.get(childId))
+      .filter((child): child is ProbeElement => child !== undefined);
   }
 
   /**
    * Returns all descendant elements recursively.
    */
   queryDescendants(id: string): ProbeElement[] {
-    // TODO: Recursive walk through children.
-    throw new Error('ElementRegistry.queryDescendants: not yet implemented');
+    const result: ProbeElement[] = [];
+    const collect = (parentId: string) => {
+      const children = this.queryChildren(parentId);
+      for (const child of children) {
+        result.push(child);
+        collect(child.id);
+      }
+    };
+    collect(id);
+    return result;
   }
 
   /**
@@ -85,7 +118,12 @@ export class ElementRegistry {
    * Returns false if any ancestor has visible=false.
    */
   isEffectivelyVisible(id: string): boolean {
-    // TODO: Walk parent chain via registry, check visible flag at each level.
-    throw new Error('ElementRegistry.isEffectivelyVisible: not yet implemented');
+    let current = this.elements.get(id);
+    while (current) {
+      if (!current.layout.visible) return false;
+      if (!current.parent) break;
+      current = this.elements.get(current.parent);
+    }
+    return current !== undefined;
   }
 }

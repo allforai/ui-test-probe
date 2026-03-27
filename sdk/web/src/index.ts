@@ -42,4 +42,4 @@ export type {
   TestResult,
   ActAndWaitResult,
   PageQueryResult,
-} from '../../spec/probe-types.js';
+} from '../../../spec/probe-types.js';

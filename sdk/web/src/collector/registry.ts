@@ -6,7 +6,7 @@
  * (which reads HTML attributes) with the runtime collectors (state, source, layout).
  */
 
-import type { ProbeElement, ProbeType } from '../../../spec/probe-types.js';
+import { type ProbeElement, ProbeType } from '../../../../spec/probe-types.js';
 import { AnnotationParser } from '../annotations/parser.js';
 
 export class ElementRegistry {
@@ -27,8 +27,14 @@ export class ElementRegistry {
    * @returns Number of elements registered.
    */
   scan(root: Element = document.body): number {
-    // TODO: implement — querySelectorAll('[data-probe-id]'), parse each, register
-    throw new Error('Not implemented');
+    const nodes = root.querySelectorAll('[data-probe-id]');
+    let count = 0;
+    for (const node of Array.from(nodes)) {
+      if (this.register(node)) count++;
+    }
+    // Also check root itself
+    if (root.hasAttribute?.('data-probe-id') && this.register(root)) count++;
+    return count;
   }
 
   /**
@@ -39,8 +45,37 @@ export class ElementRegistry {
    * @returns The registered ProbeElement, or null if no data-probe-id.
    */
   register(element: Element): ProbeElement | null {
-    // TODO: implement — parse, merge with layout/state, store in maps
-    throw new Error('Not implemented');
+    const parsed = this.parser.parse(element);
+    if (!parsed?.id) return null;
+
+    // Build full ProbeElement with defaults for required fields
+    const rect = (element as HTMLElement).getBoundingClientRect?.() ?? { x: 0, y: 0, width: 0, height: 0 };
+    const probeElement: ProbeElement = {
+      id: parsed.id,
+      type: parsed.type ?? ProbeType.DISPLAY,
+      accessibility: parsed.accessibility,
+      state: parsed.state ?? { current: 'idle', timestamp: Date.now() },
+      data: parsed.data,
+      source: parsed.source,
+      linkage: parsed.linkage,
+      layout: {
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+        visible: (element as HTMLElement).offsetParent !== null || (element as HTMLElement).getClientRects?.().length > 0,
+      },
+      shortcuts: parsed.shortcuts,
+      locale: parsed.locale,
+      theme: parsed.theme,
+      eventBindings: parsed.eventBindings,
+      parent: parsed.parent,
+      children: parsed.children,
+    };
+
+    this.elements.set(parsed.id, probeElement);
+    this.domMap.set(parsed.id, element);
+    return probeElement;
   }
 
   /**
@@ -90,8 +125,41 @@ export class ElementRegistry {
    * Uses MutationObserver to keep the registry in sync.
    */
   startObserving(root: Element = document.body): void {
-    // TODO: implement — MutationObserver on childList + subtree
-    throw new Error('Not implemented');
+    this.stopObserving();
+    this.observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        // Handle added nodes
+        for (const node of Array.from(mutation.addedNodes)) {
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+          const el = node as Element;
+          if (el.hasAttribute('data-probe-id')) {
+            this.register(el);
+          }
+          // Scan subtree of added node
+          const children = el.querySelectorAll?.('[data-probe-id]');
+          if (children) {
+            for (const child of Array.from(children)) {
+              this.register(child);
+            }
+          }
+        }
+        // Handle removed nodes
+        for (const node of Array.from(mutation.removedNodes)) {
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+          const el = node as Element;
+          const id = el.getAttribute?.('data-probe-id');
+          if (id) this.unregister(id);
+          const children = el.querySelectorAll?.('[data-probe-id]');
+          if (children) {
+            for (const child of Array.from(children)) {
+              const childId = child.getAttribute('data-probe-id');
+              if (childId) this.unregister(childId);
+            }
+          }
+        }
+      }
+    });
+    this.observer.observe(root, { childList: true, subtree: true });
   }
 
   /**

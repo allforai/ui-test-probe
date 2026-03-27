@@ -6,6 +6,37 @@
  */
 
 import type { Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+let _bundleCache: string | null = null;
+
+function loadBundle(): string {
+  if (_bundleCache) return _bundleCache;
+
+  // Resolve the pre-built IIFE bundle from the web SDK
+  // Try multiple resolution strategies
+  const candidates = [
+    // Relative from this file's compiled location (dist/)
+    resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'sdk', 'web', 'dist', 'probe-bundle.js'),
+    // From node_modules (when installed as packages)
+    resolve(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', '@allforai', 'ui-test-probe-web', 'dist', 'probe-bundle.js'),
+  ];
+
+  for (const path of candidates) {
+    try {
+      _bundleCache = readFileSync(path, 'utf-8');
+      return _bundleCache;
+    } catch {
+      // Try next candidate
+    }
+  }
+
+  throw new Error(
+    `Could not find probe-bundle.js. Run 'npm run build' in sdk/web/ first.\nSearched:\n${candidates.join('\n')}`
+  );
+}
 
 /**
  * Inject the UI Test Probe collector into a Playwright page.
@@ -45,22 +76,13 @@ export async function injectProbe(
     interceptNetwork: options?.interceptNetwork ?? true,
   };
 
-  // TODO: implement — bundle the WebProbe class into a self-contained script string,
-  //   then call page.addInitScript() with that script + config.
-  //   The script should:
-  //   1. Define all probe classes inline (no module imports at runtime)
-  //   2. Instantiate new WebProbe(config)
-  //   3. Store as window.__probe__
-  //
-  //   For now, use a placeholder that creates a minimal stub:
+  const bundleScript = loadBundle();
+
+  // Inject config first, then the bundle which reads it on initialization
   await page.addInitScript(`
-    // UI Test Probe — injected collector (stub)
-    // Full implementation will bundle the WebProbe class here.
-    window.__probe__ = {
-      _injected: true,
-      _config: ${JSON.stringify(config)},
-    };
+    window.__probeConfig__ = ${JSON.stringify(config)};
   `);
+  await page.addInitScript(bundleScript);
 
   return page;
 }
