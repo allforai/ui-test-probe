@@ -14,6 +14,7 @@ import { Command } from 'commander';
 import { instrumentCommand } from './commands/instrument';
 import { validateCommand } from './commands/validate';
 import { reportCommand } from './commands/report';
+import { conformanceCommand } from './commands/conformance';
 
 const program = new Command();
 
@@ -53,5 +54,19 @@ program
   .option('--include <patterns...>', 'Glob patterns to include')
   .option('--exclude <patterns...>', 'Glob patterns to exclude')
   .action(reportCommand);
+
+program
+  .command('conformance')
+  .description('Run cross-platform conformance test vectors')
+  .option('-p, --platform <platforms...>', 'Platforms to test (web,flutter,ios,android,windows)')
+  .option('-v, --vector-dir <path>', 'Vector directory', './spec/conformance/vectors')
+  .option('--json', 'Output JSON report')
+  .option('-o, --output <path>', 'Save report to file')
+  .action((opts) => conformanceCommand({
+    platform: opts.platform ?? [],
+    vectorDir: opts.vectorDir,
+    json: opts.json,
+    output: opts.output,
+  }));
 
 program.parse();
