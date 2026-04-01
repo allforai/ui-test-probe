@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>UITestProbe.Core</RootNamespace>
+    <PackageId>AllForAI.UITestProbe.Core</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>AllForAI</Authors>
+    <Description>Core models and interfaces for UI Test Probe Windows SDKs — shared across WPF, WinForms, and WinUI</Description>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+</Project>

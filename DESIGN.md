@@ -471,10 +471,11 @@ select('province', '广东')
 │  JSON-based，跨平台一致                          │
 ├─────────────────────────────────────────────────┤
 │  Platform Adapters（平台适配层）                   │
-│  ┌──────┬──────┬──────┬──────┬──────┬──────┐    │
-│  │ Web  │Flutt.│ iOS  │Andro.│ WinUI│ RN   │    │
-│  │ JS   │ Dart │Swift │Kotlin│ C#   │ JS   │    │
-│  └──────┴──────┴──────┴──────┴──────┴──────┘    │
+│  ┌──────┬──────┬──────┬──────┬──────────────┬──────┐ │
+│  │ Web  │Flutt.│ iOS  │Andro.│ Windows      │ RN   │ │
+│  │ JS   │ Dart │Swift │Kotlin│ WPF/WinForm/ │ JS   │ │
+│  │      │      │      │      │ WinUI (C#)   │      │ │
+│  └──────┴──────┴──────┴──────┴──────────────┴──────┘ │
 ├─────────────────────────────────────────────────┤
 │  Annotation Layer（标注层）                       │
 │  Web: data-probe-*  Flutter: ProbeWidget         │
@@ -499,9 +500,10 @@ sdk/{platform}/
 | **Flutter** | `ProbeWidget` 包装 | `ProbeWidget(id: 'order-list', type: ProbeType.dataContainer, child: DataTable(...))` |
 | **SwiftUI** | `.probeId()` modifier | `List { ... }.probeId("order-list").probeType(.dataContainer)` |
 | **Compose** | `Modifier.probeId()` | `LazyColumn(modifier = Modifier.probeId("order-list").probeType(DataContainer))` |
+| **WPF** | attached property | `<ListView probe:Probe.Id="order-list" probe:Probe.Type="DataContainer">` |
+| **WinForms** | ExtenderProvider | `probeProvider.SetProbeId(listView, "order-list")` |
 | **WinUI/MAUI** | attached property | `<ListView probe:Probe.Id="order-list" probe:Probe.Type="DataContainer">` |
 | **React Native** | `probeProps` | `<FlatList testID="order-list" probeProps={{type: 'data-container'}}>` |
-| **Electron** | 复用 Web 标注 | 与 Web 相同 |
 
 ### 各平台收集器注入方式
 
@@ -511,6 +513,8 @@ sdk/{platform}/
 | **Flutter** | `WidgetTester` 扩展 | 零 |
 | **iOS** | XCUITest 进程桥接 | 零 |
 | **Compose** | `ComposeTestRule` 扩展 | 零 |
+| **WPF** | UI Automation API / 进程内注入 | 零 |
+| **WinForms** | UI Automation API / 进程内注入 | 零 |
 | **WinUI** | UI Automation API | 零 |
 | **React Native** | Detox/Appium 桥接 | 零 |
 
@@ -555,14 +559,19 @@ ui-test-probe/
 │   ├── flutter/                    # Dart — ui_test_probe_flutter
 │   ├── ios/                        # Swift — UITestProbe
 │   ├── android/                    # Kotlin — ui-test-probe-android
-│   ├── windows/                    # C# — UITestProbe.NET
+│   ├── windows-core/               # C# — shared models + interfaces
+│   ├── windows-wpf/                # C# — WPF AttachedProperty adapter
+│   ├── windows-winform/            # C# — WinForms ExtenderProvider adapter
+│   ├── windows-winui/              # C# — WinUI/MAUI adapter
 │   └── react-native/              # TypeScript — @allforai/ui-test-probe-rn
 │
 ├── integrations/
 │   ├── playwright/                 # @allforai/ui-test-probe-playwright
 │   ├── flutter-test/
 │   ├── xctest/
-│   └── compose-test/
+│   ├── compose-test/
+│   ├── wpf-test/
+│   └── winform-test/
 │
 ├── tools/
 │   └── cli/                        # @allforai/ui-test-probe-cli
@@ -581,7 +590,10 @@ ui-test-probe/
 | `ui_test_probe_flutter` | pub.dev |
 | `UITestProbe` (Swift) | Swift Package Manager |
 | `ui-test-probe-android` | Maven Central |
-| `UITestProbe.NET` | NuGet |
+| `UITestProbe.Core` | NuGet |
+| `UITestProbe.Wpf` | NuGet |
+| `UITestProbe.WinForms` | NuGet |
+| `UITestProbe.WinUI` | NuGet |
 | `@allforai/ui-test-probe-rn` | npm |
 | `@allforai/ui-test-probe-playwright` | npm |
 | `@allforai/ui-test-probe-cli` | npm |
@@ -607,9 +619,10 @@ Phase 3: iOS + Android 原生（3 周，可并行）
 ├── sdk/android/ + integrations/compose-test/
 └── 交付：原生移动端可用
 
-Phase 4: Windows + React Native + CLI（3 周，可并行）
-├── sdk/windows/ + sdk/react-native/
-├── tools/cli/
+Phase 4: Windows + React Native + CLI（4 周，可并行）
+├── sdk/windows-core/ + sdk/windows-wpf/ + sdk/windows-winform/ + sdk/windows-winui/
+├── integrations/wpf-test/ + integrations/winform-test/
+├── sdk/react-native/ + tools/cli/
 └── 交付：全平台覆盖 + 自动标注
 
 Phase 5: myskills 集成（2 周）

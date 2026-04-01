@@ -1,18 +1,17 @@
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import '../annotations/probe_types.dart';
 import '../annotations/probe_widget.dart';
 
-/// A binding extension that scans the widget tree for [ProbeWidget] instances
-/// and maintains a live registry of [ProbeElement] objects.
+/// Scans the widget tree for [ProbeWidget] instances and maintains a live
+/// registry of [ProbeElement] objects.
 ///
-/// Injected at test time to enable semantic querying without coupling
-/// production code to test infrastructure.
-class ProbeBinding extends WidgetsFlutterBinding {
+/// Works with whatever binding is active (test or production). Does NOT
+/// extend or replace the binding — just reads the element tree.
+class ProbeBinding {
   /// Singleton instance.
   static ProbeBinding? _instance;
 
-  /// Initialize the probe binding. Call once before runApp() in test setup.
+  /// Get the singleton. Creates one if needed.
   static ProbeBinding ensureInitialized() {
     _instance ??= ProbeBinding();
     return _instance!;

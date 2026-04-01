@@ -1,0 +1,111 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "tool": "flutter analyze",
+  "packages": [
+    {
+      "path": "sdk/flutter",
+      "command": "flutter analyze",
+      "exit_code": 1,
+      "issues": [
+        {
+          "severity": "info",
+          "message": "The import of 'package:flutter/rendering.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/widgets.dart'",
+          "location": "lib/src/collector/probe_binding.dart:1:8",
+          "rule": "unnecessary_import"
+        },
+        {
+          "severity": "error",
+          "message": "Undefined class 'Encoding'",
+          "location": "lib/src/collector/source_tracker.dart:360:3",
+          "rule": "undefined_class"
+        },
+        {
+          "severity": "error",
+          "message": "Undefined class 'Encoding'",
+          "location": "lib/src/collector/source_tracker.dart:362:16",
+          "rule": "undefined_class"
+        },
+        {
+          "severity": "warning",
+          "message": "Unused import: 'package:flutter/scheduler.dart'",
+          "location": "lib/src/collector/state_observer.dart:2:8",
+          "rule": "unused_import"
+        },
+        {
+          "severity": "warning",
+          "message": "Unused import: '../annotations/probe_types.dart'",
+          "location": "lib/src/collector/state_observer.dart:4:8",
+          "rule": "unused_import"
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "path": "integrations/flutter-test",
+      "command": "flutter analyze",
+      "exit_code": 1,
+      "issues": [
+        {
+          "severity": "info",
+          "message": "'window' is deprecated and shouldn't be used. Use WidgetTester.platformDispatcher or WidgetTester.view instead.",
+          "location": "lib/src/probe_tester.dart:160:13",
+          "rule": "deprecated_member_use"
+        },
+        {
+          "severity": "info",
+          "message": "'physicalSizeTestValue' is deprecated and shouldn't be used. Use WidgetTester.view.physicalSize instead.",
+          "location": "lib/src/probe_tester.dart:160:20",
+          "rule": "deprecated_member_use"
+        },
+        {
+          "severity": "info",
+          "message": "'window' is deprecated and shouldn't be used. Use WidgetTester.platformDispatcher or WidgetTester.view instead.",
+          "location": "lib/src/probe_tester.dart:162:13",
+          "rule": "deprecated_member_use"
+        },
+        {
+          "severity": "info",
+          "message": "'devicePixelRatioTestValue' is deprecated and shouldn't be used. Use WidgetTester.view.devicePixelRatio instead.",
+          "location": "lib/src/probe_tester.dart:162:20",
+          "rule": "deprecated_member_use"
+        },
+        {
+          "severity": "info",
+          "message": "'window' is deprecated and shouldn't be used. Use WidgetTester.platformDispatcher or WidgetTester.view instead.",
+          "location": "lib/src/probe_tester.dart:182:20",
+          "rule": "deprecated_member_use"
+        },
+        {
+          "severity": "info",
+          "message": "'clearPhysicalSizeTestValue' is deprecated and shouldn't be used. Use WidgetTester.view.resetPhysicalSize() instead.",
+          "location": "lib/src/probe_tester.dart:182:27",
+          "rule": "deprecated_member_use"
+        },
+        {
+          "severity": "info",
+          "message": "'window' is deprecated and shouldn't be used. Use WidgetTester.platformDispatcher or WidgetTester.view instead.",
+          "location": "lib/src/probe_tester.dart:183:20",
+          "rule": "deprecated_member_use"
+        },
+        {
+          "severity": "info",
+          "message": "'clearDevicePixelRatioTestValue' is deprecated and shouldn't be used. Use WidgetTester.view.resetDevicePixelRatio() instead.",
+          "location": "lib/src/probe_tester.dart:183:27",
+          "rule": "deprecated_member_use"
+        },
+        {
+          "severity": "warning",
+          "message": "Publishable packages can't have 'path' dependencies",
+          "location": "pubspec.yaml:14:5",
+          "rule": "invalid_dependency"
+        }
+      ],
+      "status": "pass"
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "passed": 1,
+    "failed": 1
+  }
+}

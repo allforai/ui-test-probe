@@ -113,9 +113,10 @@ Built-in device presets: iPhone SE/15 Pro, iPad Air/Pro, Pixel 8, Galaxy S24/Tab
 | Flutter (Web/Mobile/Desktop) | Dart | Phase 2 |
 | SwiftUI (iOS/macOS) | Swift | Phase 3 |
 | Jetpack Compose (Android) | Kotlin | Phase 3 |
+| WPF (Windows) | C# | Phase 4 |
+| WinForms (Windows) | C# | Phase 4 |
 | WinUI/MAUI (Windows) | C# | Phase 4 |
 | React Native | TypeScript | Phase 4 |
-| Electron | TypeScript (reuses Web SDK) | Phase 1 |
 
 ## Documentation
 

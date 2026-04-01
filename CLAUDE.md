@@ -47,17 +47,22 @@ ui-test-probe/
 │   ├── flutter/             ← Dart
 │   ├── ios/                 ← Swift (SwiftUI)
 │   ├── android/             ← Kotlin (Jetpack Compose)
-│   ├── windows/             ← C# (WinUI/MAUI)
+│   ├── windows-core/        ← C# shared models + interfaces
+│   ├── windows-wpf/         ← C# WPF (DependencyProperty)
+│   ├── windows-winform/     ← C# WinForms (ExtenderProvider)
+│   ├── windows-winui/       ← C# WinUI/MAUI (BindableProperty)
 │   └── react-native/        ← TypeScript
 ├── integrations/
 │   ├── playwright/          ← Web test integration
 │   ├── flutter-test/        ← Flutter test integration
 │   ├── xctest/              ← iOS test integration
 │   ├── compose-test/        ← Android test integration
-│   ├── winui-test/          ← Windows test integration
+│   ├── wpf-test/            ← WPF test integration
+│   ├── winform-test/        ← WinForms test integration
+│   ├── winui-test/          ← WinUI/MAUI test integration
 │   └── detox/               ← React Native test integration
 ├── tools/cli/               ← instrument + validate + report commands
-├── examples/                ← 8 platform demos (web-react, web-vue, flutter, ios, android, windows, rn, electron)
+├── examples/                ← 7 platform demos (web-react, web-vue, flutter, ios, android, windows, rn)
 ├── SPEC.md                  ← Requirements
 ├── DESIGN.md                ← Technical design (authoritative)
 └── README.md
@@ -67,9 +72,13 @@ ui-test-probe/
 
 - **spec/**: Complete — JSON Schema, TypeScript types, device presets
 - **sdk/***: Scaffolded — package configs + type definitions + stub implementations (throw NotImplementedError)
+- **sdk/windows-core/**: Shared models (ProbeTypes) + IProbeRegistry interface + ActionDispatcherBase
+- **sdk/windows-wpf/**: WPF adapter — DependencyProperty annotations + VisualTreeHelper registry
+- **sdk/windows-winform/**: WinForms adapter — ExtenderProvider annotations + Control tree registry
+- **sdk/windows-winui/**: WinUI/MAUI adapter — BindableProperty annotations (adapted from original sdk/windows/)
 - **integrations/***: Scaffolded — same as above
 - **tools/cli/**: Scaffolded
-- **examples/**: Reference usage demos (not runnable yet — depend on SDK implementation)
+- **examples/**: Reference usage demos (not runnable yet — depend on SDK implementation). Electron removed (reuses Web SDK).
 
 ## What To Do Next
 
@@ -146,7 +155,7 @@ ui-test-probe/
 
 ### Phase 4: Windows + React Native + CLI
 
-21. **sdk/windows/** — implement MAUI attached properties
+21. **sdk/windows-core/** + **sdk/windows-wpf/** + **sdk/windows-winform/** + **sdk/windows-winui/** — already scaffolded
 22. **sdk/react-native/** — implement probeProps, bridge
 23. **tools/cli/** — implement instrument, validate, report
 

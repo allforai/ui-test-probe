@@ -1,0 +1,851 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "product_type": "sdk",
+  "product_name": "ui-test-probe",
+  "mission": "Transform black-box screenshot testing into white-box state queries by exposing structured UI element state, data sources, and linkage chains as first-class test primitives.",
+  "personas": [
+    {
+      "id": "DP1",
+      "name": "Test Engineer",
+      "role": "primary",
+      "expertise_level": "intermediate",
+      "description": "QA or test automation engineer who writes and maintains end-to-end tests. Frustrated by flaky tests caused by timing issues, screenshot-based assertions that miss data correctness, and CSS selector fragility. Wants deterministic, fast, and semantically meaningful test assertions.",
+      "goals": [
+        "Replace screenshot-based verification with structured state queries",
+        "Eliminate flaky tests caused by fixed timeouts and race conditions",
+        "Verify data linkage chains (filter change → API call → table update) in one assertion",
+        "Run the same test across multiple device profiles without rewriting",
+        "Get clear, actionable error messages when pre-checks fail (element not found, disabled, busy)"
+      ],
+      "pain_points_addressed": [
+        "Cannot verify data correctness from screenshots — only visual appearance (~80% accuracy)",
+        "Fixed setTimeout waits cause both slowness and flakiness",
+        "CSS selectors break on refactors without semantic meaning",
+        "No way to verify that a filter change actually triggered the right API call",
+        "Tests pass/fail inconsistently due to timing-dependent assertions"
+      ],
+      "interaction_pattern": "Uses integration SDK (ProbePage for Playwright, ProbeTester for Flutter, ProbeXCTest for iOS, ProbeTestRule for Android, ProbeDevice for Detox). Writes test code against the typed probe API. Relies on waitForState/waitForPageReady for synchronization and actAndWait for composite operations. Uses custom matchers (toHaveProbeState, toHaveProbeData, toBeEffectivelyVisible) for readable assertions.",
+      "tools_used": ["Playwright", "Flutter Test", "XCTest", "Compose UI Test", "Detox", "WPF Test Automation"],
+      "key_api_methods": [
+        "query() — state assertion instead of screenshot",
+        "waitForPageReady() — replaces page.waitForTimeout()",
+        "actAndWait() — action + synchronization + linkage verification",
+        "verifyLinkage() — explicit data flow chain validation",
+        "runAcrossDevices() — responsive/device matrix testing",
+        "snapshot() / diff() — regression baseline comparison"
+      ],
+      "success_metric": "60-page acceptance testing reduced from 2+ hours to 15-30 minutes; flaky tests eliminated by event-driven waits"
+    },
+    {
+      "id": "DP2",
+      "name": "Frontend Developer",
+      "role": "secondary",
+      "expertise_level": "intermediate",
+      "description": "Developer building the UI who adds probe annotations to key controls. Needs the annotation overhead to be minimal (5-10 annotations per page, <30 minutes) and zero-impact in production builds.",
+      "goals": [
+        "Annotate key UI controls with minimal effort (<30 min per page for typical complexity)",
+        "Use platform-native idioms (HTML attributes, SwiftUI modifiers, Compose modifiers)",
+        "Ensure annotations have zero production impact (collector only injected at test time)",
+        "Express data linkages declaratively (data-probe-linkage JSON) for automatic verification",
+        "Get CLI support for auto-generating annotations on existing codebases",
+        "Validate annotation quality via CLI (no duplicate IDs, no orphan linkage targets)"
+      ],
+      "pain_points_addressed": [
+        "Test engineers constantly ask about element selectors and timing — probe gives them semantic access",
+        "Refactoring UI breaks tests written against implementation details",
+        "No standard way to express 'this dropdown controls that table' — linkage model solves this",
+        "data-testid attributes are arbitrary and don't carry semantic meaning"
+      ],
+      "interaction_pattern": "Adds data-probe-* attributes (web), ProbeWidget wrappers (Flutter), .probeId() modifiers (SwiftUI/Compose), or attached properties (WPF/MAUI) to key UI controls. Uses CLI instrument command to auto-annotate existing projects. Uses validate command to check for duplicate IDs, orphan linkages, circular linkages. Uses report command to check coverage.",
+      "tools_used": ["ui-test-probe CLI (instrument/validate/report)", "IDE with framework-specific tooling", "dev-forge (auto-generates annotations in generated code)"],
+      "annotation_cost_model": {
+        "simple_page_2_3_controls": "5 minutes",
+        "medium_page_5_8_controls": "15 minutes",
+        "complex_page_10_15_controls": "30 minutes",
+        "20_page_project_total": "~3 hours",
+        "percent_of_dev_time": "< 5%"
+      },
+      "key_api_methods": [
+        "data-probe-id — required minimum annotation",
+        "data-probe-type — widget category classification",
+        "data-probe-state — runtime state binding",
+        "data-probe-source — API endpoint association",
+        "data-probe-linkage — downstream element declarations"
+      ]
+    },
+    {
+      "id": "DP3",
+      "name": "SDK Contributor",
+      "role": "tertiary",
+      "expertise_level": "advanced",
+      "description": "Engineer implementing a new platform SDK (e.g. adding Electron support, implementing a stub platform). Must understand the full UITestProbe interface, the ProbeElement model, and the 6-primitive contract. Works against spec/probe-types.ts as the authoritative contract.",
+      "goals": [
+        "Implement the complete UITestProbe interface (6 primitives + hierarchy + platform context)",
+        "Map platform UI tree (DOM / Widget Tree / View Hierarchy / SemanticsNode) to ProbeElement model",
+        "Achieve conformance with spec/probe-types.ts type definitions",
+        "Match annotation style to platform idioms while preserving semantic equivalence",
+        "Integrate with the platform test framework (WidgetTester, XCTest, ComposeTestRule, etc.)"
+      ],
+      "pain_points_addressed": [
+        "No conformance test suite yet (spec/conformance-tests/ referenced but not present)",
+        "ProbeType enum divergence (7 vs 9 types) between platforms is undocumented at SDK level",
+        "No CONTRIBUTING.md or platform-porting guide"
+      ],
+      "interaction_pattern": "Reads spec/probe-types.ts as the contract. Reads sdk/web/ as the reference implementation. Implements the same interface in the target language. Writes annotations module (parse/attach metadata), collector module (registry + state observer + source tracker), and actions module (dispatcher with pre-checks). Wires together in a main class.",
+      "tools_used": ["spec/probe-types.ts", "sdk/web/ (reference implementation)", "platform test framework docs"],
+      "architecture_contract": {
+        "annotations_module": "Reads platform-native metadata and produces ProbeElement fields",
+        "collector_module": "Maintains live registry; observes state changes; intercepts network",
+        "actions_module": "Dispatches real platform events with 5-point pre-checks and linkage verification",
+        "main_class": "Composes all modules; implements UITestProbe interface"
+      }
+    }
+  ],
+  "api_groups": [
+    {
+      "id": "G1",
+      "name": "Element Registry",
+      "primitive_number": 1,
+      "description": "Register and query UI elements by semantic ID. The foundation primitive that all others depend on. Scans the UI tree (DOM, widget tree, view hierarchy) for annotated elements and maintains a live registry keyed by probe ID.",
+      "operations": [
+        {
+          "id": "OP001",
+          "method": "query",
+          "signature": "(id: string) => ProbeElement | null",
+          "description": "Look up a single element by its semantic probe ID. Returns the full 15-attribute ProbeElement or null if not found.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP002",
+          "method": "queryAll",
+          "signature": "(type?: ProbeType) => ProbeElement[]",
+          "description": "Return all registered elements, optionally filtered by ProbeType (e.g. only 'data-container' or 'action' elements).",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP003",
+          "method": "queryPage",
+          "signature": "() => PageQueryResult",
+          "description": "Return a summary of the current page: its ID, state, all elements, and which elements are still loading/submitting (unready). If no PAGE element found, derives state from unready elements count.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        }
+      ]
+    },
+    {
+      "id": "G2",
+      "name": "State Exposure",
+      "primitive_number": 2,
+      "description": "Expose real-time element state (loaded/error/disabled/submitting/etc.) as structured data instead of requiring screenshot interpretation. State includes current value, previous value, timestamp, open/closed for modals, and validation errors.",
+      "operations": [
+        {
+          "id": "OP004",
+          "method": "getState",
+          "signature": "(id: string) => ProbeElement['state']",
+          "description": "Get the current state object for a specific element. Throws Error (not ProbeActionError) if element not found.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP005",
+          "method": "getStates",
+          "signature": "(ids: string[]) => Record<string, ProbeElement['state']>",
+          "description": "Batch query: get state objects for multiple elements at once. Silently skips IDs not found.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        }
+      ]
+    },
+    {
+      "id": "G3",
+      "name": "Event Stream",
+      "primitive_number": 3,
+      "description": "Subscribe to state changes and events using an event-driven model instead of polling or fixed timeouts. Provides promise-based waitFor methods for test synchronization and callback-based subscriptions for continuous monitoring.",
+      "operations": [
+        {
+          "id": "OP006",
+          "method": "waitForState",
+          "signature": "(id: string, state: string, timeout?: number) => Promise<void>",
+          "description": "Wait until a specific element reaches the desired state string. Resolves immediately if already in that state. Rejects on timeout (default 10s).",
+          "category": "wait",
+          "default_timeout_ms": 10000,
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP007",
+          "method": "waitForPageReady",
+          "signature": "(timeout?: number) => Promise<void>",
+          "description": "Wait until the page is ready: either the PAGE element reaches 'loaded' state, or all elements leave loading/submitting states. Default timeout 30s.",
+          "category": "wait",
+          "default_timeout_ms": 30000,
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP008",
+          "method": "onStateChange",
+          "signature": "(id: string, callback: (oldState: string, newState: string) => void) => () => void",
+          "description": "Register a callback that fires whenever the specified element's state changes. Returns an unsubscribe function.",
+          "category": "subscribe",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP009",
+          "method": "onEvent",
+          "signature": "(id: string, event: string, callback: (detail: unknown) => void) => () => void",
+          "description": "Subscribe to arbitrary probe events scoped to a specific element. Returns an unsubscribe function.",
+          "category": "subscribe",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        }
+      ]
+    },
+    {
+      "id": "G4",
+      "name": "Source Binding",
+      "primitive_number": 4,
+      "description": "Link UI elements to their API data sources. Intercepts network requests and correlates them with elements annotated with data-probe-source. Tracks URL, method, HTTP status, response time, and payload.",
+      "operations": [
+        {
+          "id": "OP010",
+          "method": "getSource",
+          "signature": "(id: string) => ProbeElement['source'] | null",
+          "description": "Get the source binding for an element: URL, method, status code, response time. Returns null if no source tracked.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": false, "android": false, "windows": false, "react_native": true }
+        },
+        {
+          "id": "OP011",
+          "method": "getNetworkLog",
+          "signature": "() => NetworkLogEntry[]",
+          "description": "Return the full network log since probe installation. Each entry includes URL, method, status, timestamp, and matched elementId if correlated.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": false, "android": false, "windows": false, "react_native": true }
+        },
+        {
+          "id": "OP012",
+          "method": "waitForSource",
+          "signature": "(id: string, timeout?: number) => Promise<ProbeElement['source']>",
+          "description": "Wait until a specific element's source binding is populated (the corresponding network request completes).",
+          "category": "wait",
+          "default_timeout_ms": 10000,
+          "platform_coverage": { "web": true, "flutter": true, "ios": false, "android": false, "windows": false, "react_native": true }
+        }
+      ]
+    },
+    {
+      "id": "G5",
+      "name": "Layout Metrics",
+      "primitive_number": 5,
+      "description": "Provide position, size, visibility, scroll position, and render timing metrics from the rendering engine. Uses platform-native APIs (getBoundingClientRect + IntersectionObserver web, RenderBox flutter, UIView.frame iOS, SemanticsNode.boundsInWindow Android, UIElement.RenderSize Windows).",
+      "operations": [
+        {
+          "id": "OP013",
+          "method": "getLayout",
+          "signature": "(id: string) => ProbeElement['layout']",
+          "description": "Get current layout metrics: x, y, width, height, visible flag, render time, scroll offsets.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP014",
+          "method": "getOverlaps",
+          "signature": "() => Array<{ a: string; b: string; overlapArea: number }>",
+          "description": "Detect all pairs of overlapping probe elements in the current viewport by computing bounding rect intersection areas.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": false, "ios": false, "android": false, "windows": false, "react_native": false }
+        },
+        {
+          "id": "OP015",
+          "method": "getScrollPosition",
+          "signature": "(id: string) => { scrollTop: number; scrollLeft: number }",
+          "description": "Get the scroll position of a scrollable probe element in pixels.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        }
+      ]
+    },
+    {
+      "id": "G6",
+      "name": "Action Dispatch",
+      "primitive_number": 6,
+      "description": "Perform semantic UI operations using probe IDs with smart 5-point pre-checks (exists, visible, enabled, not busy, option exists for select). Every action dispatches real platform events. After each action, automatically verifies linkage targets if declared on the element.",
+      "pre_check_sequence": [
+        "1. Element exists in registry → NOT_FOUND if missing",
+        "2. layout.visible === true → NOT_VISIBLE if hidden",
+        "3. state.current !== 'disabled' → DISABLED if disabled",
+        "4. state.current not in ['loading', 'submitting'] → BUSY if busy",
+        "5. For select only: value in data.options → OPTION_NOT_FOUND if missing"
+      ],
+      "operations": [
+        {
+          "id": "OP016",
+          "method": "click",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Click an element with full 4-point pre-check (NOT_FOUND, NOT_VISIBLE, DISABLED, BUSY).",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP017",
+          "method": "doubleClick",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Double-click an element.",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP018",
+          "method": "rightClick",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Right-click / context menu on an element.",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP019",
+          "method": "hover",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Hover over element dispatching mouseenter and mouseover events.",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP020",
+          "method": "focus",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Move keyboard focus to element.",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP021",
+          "method": "type",
+          "signature": "(id: string, text: string) => Promise<void>",
+          "description": "Type text character-by-character dispatching keydown/keypress/input/keyup per character.",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP022",
+          "method": "fill",
+          "signature": "(id: string, value: string) => Promise<void>",
+          "description": "Set input value atomically (works with React controlled components via native setter + input/change events).",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP023",
+          "method": "clear",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Clear an input element (implemented as fill(id, '')).",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP024",
+          "method": "select",
+          "signature": "(id: string, value: string) => Promise<void>",
+          "description": "Select an option from a selector element. Validates option exists against data.options before dispatching (5th pre-check).",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP025",
+          "method": "check",
+          "signature": "(id: string, checked: boolean) => Promise<void>",
+          "description": "Set checked state of a checkbox or radio button.",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP026",
+          "method": "scrollTo",
+          "signature": "(id: string, position: { top?: number; left?: number }) => Promise<void>",
+          "description": "Scroll element to absolute position.",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP027",
+          "method": "scrollToBottom",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Scroll element to maximum scroll position.",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP028",
+          "method": "scrollIntoView",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Scroll viewport to center element.",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP029",
+          "method": "drag",
+          "signature": "(sourceId: string, targetId: string) => Promise<void>",
+          "description": "Drag-and-drop from source to target. Pre-checks BOTH source and target elements.",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP030",
+          "method": "pressShortcut",
+          "signature": "(key: string) => Promise<void>",
+          "description": "Press a keyboard shortcut (e.g. 'Ctrl+S'). No element pre-checks — dispatched to document/app.",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP031",
+          "method": "navigate",
+          "signature": "(route: string) => Promise<void>",
+          "description": "Navigate to a route (history.pushState on web). No element pre-checks.",
+          "category": "action",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP032",
+          "method": "snapshot",
+          "signature": "() => ProbeSnapshot",
+          "description": "Capture a full snapshot of all registered elements with platform context. Used as regression baseline.",
+          "category": "composite",
+          "platform_coverage": { "web": true, "flutter": false, "ios": false, "android": false, "windows": false, "react_native": false }
+        },
+        {
+          "id": "OP033",
+          "method": "diff",
+          "signature": "(a: ProbeSnapshot, b: ProbeSnapshot) => SnapshotDiff[]",
+          "description": "Compare two snapshots and return an array of field-level differences (elementId, field, before, after).",
+          "category": "composite",
+          "platform_coverage": { "web": true, "flutter": false, "ios": false, "android": false, "windows": false, "react_native": false }
+        },
+        {
+          "id": "OP034",
+          "method": "verifyLinkage",
+          "signature": "(triggerId: string, action: string) => Promise<LinkageResult>",
+          "description": "Verify all declared linkage targets responded correctly after an action. Returns structured result with directEffects, chainedEffects, and apiCalls.",
+          "category": "composite",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP035",
+          "method": "actAndWait",
+          "signature": "(id: string, action: string, waitFor: { target?: string; state?: string; timeout?: number }) => Promise<ActAndWaitResult>",
+          "description": "Execute a semantic action then wait for a target element to reach a specific state. Automatically invokes verifyLinkage if linkage targets are declared. Returns actionDuration, waitDuration, targetState, and linkageResults.",
+          "category": "composite",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        }
+      ]
+    },
+    {
+      "id": "G7",
+      "name": "Hierarchy",
+      "primitive_number": null,
+      "description": "Navigate the parent-children tree of probe elements. Enables ancestor chain walking for effective visibility checks — child visible=true but parent hidden means effectively invisible.",
+      "operations": [
+        {
+          "id": "OP036",
+          "method": "queryChildren",
+          "signature": "(id: string) => ProbeElement[]",
+          "description": "Get direct child elements by reading element.children[] probe IDs and resolving from registry.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP037",
+          "method": "queryDescendants",
+          "signature": "(id: string) => ProbeElement[]",
+          "description": "Recursively collect all descendant probe elements in the subtree rooted at the given element.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP038",
+          "method": "queryParent",
+          "signature": "(id: string) => ProbeElement | null",
+          "description": "Get the direct parent element by reading element.parent probe ID.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP039",
+          "method": "getAncestorChain",
+          "signature": "(id: string) => ProbeElement[]",
+          "description": "Walk the parent chain from root to the given element, returning all ancestors in order.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP040",
+          "method": "isEffectivelyVisible",
+          "signature": "(id: string) => boolean",
+          "description": "Check that every ancestor in the chain has layout.visible=true. Returns false if any ancestor is hidden.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        }
+      ]
+    },
+    {
+      "id": "G8",
+      "name": "Platform Context",
+      "primitive_number": null,
+      "description": "Manage platform, device, and viewport context. Provides 11 built-in device presets and runAcrossDevices() for matrix testing across multiple device profiles with a single test function.",
+      "operations": [
+        {
+          "id": "OP041",
+          "method": "setPlatformContext",
+          "signature": "(context: PlatformContext) => Promise<void>",
+          "description": "Set the full platform context (platform, device profile, viewport size, input mode).",
+          "category": "write",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP042",
+          "method": "getPlatformContext",
+          "signature": "() => PlatformContext",
+          "description": "Get the current platform context. Web: auto-detects from navigator.userAgent + window.innerWidth if not explicitly set.",
+          "category": "read",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP043",
+          "method": "setDevice",
+          "signature": "(preset: ViewportPreset | string) => Promise<void>",
+          "description": "Apply a named device preset from spec/devices.json. Available: iphone-se, iphone-15-pro, ipad-air, ipad-pro-12, pixel-8, galaxy-s24, galaxy-tab-s9, galaxy-fold, macbook-air-13, desktop-1080p, desktop-1440p.",
+          "category": "write",
+          "platform_coverage": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "id": "OP044",
+          "method": "runAcrossDevices",
+          "signature": "(devices: Array<ViewportPreset | string>, test: (probe: UITestProbe) => Promise<void>) => Promise<Record<string, TestResult>>",
+          "description": "Run the same test function across multiple device profiles sequentially. Returns { deviceName: { device, passed, duration, error? } }.",
+          "category": "composite",
+          "platform_coverage": { "web": true, "flutter": true, "ios": false, "android": true, "windows": false, "react_native": true }
+        }
+      ]
+    }
+  ],
+  "developer_flows": [
+    {
+      "persona": "DP1",
+      "persona_name": "Test Engineer",
+      "stages": [
+        {
+          "name": "Discover",
+          "activities": [
+            "Reads README.md to understand the 6 primitives and two-layer architecture",
+            "Views the code examples showing query/waitForPageReady/actAndWait patterns",
+            "Understands the '7 testing pain points' table and maps to own testing frustrations"
+          ],
+          "friction_points": [
+            "README examples use page.probe shorthand but the actual Playwright integration requires ProbePage wrapper — the setup step is not shown",
+            "No quick-start tutorial scoped to a specific framework (React+Playwright, Flutter, etc.)"
+          ]
+        },
+        {
+          "name": "Evaluate",
+          "activities": [
+            "Reads DESIGN.md for full API surface and linkage model details",
+            "Reviews example project for own platform to see annotation patterns",
+            "Checks spec/probe-types.ts to understand the type contract"
+          ],
+          "friction_points": [
+            "DESIGN.md is written in Chinese — English developers need translation assistance",
+            "Example projects are not runnable yet (depend on SDK builds not published)"
+          ]
+        },
+        {
+          "name": "Integrate",
+          "activities": [
+            "Installs integration package (@allforai/ui-test-probe-playwright)",
+            "Builds sdk/web IIFE bundle (npm run build in sdk/web/) as prerequisite",
+            "Adds injectProbe() to test setup / playwright.config.ts global fixtures",
+            "Wraps Playwright Page in ProbePage for typed probe access",
+            "Registers custom matchers via expect.extend()"
+          ],
+          "friction_points": [
+            "Must build sdk/web IIFE bundle first — dist/probe-bundle.js dependency is not pre-published",
+            "ProbePage is not automatically injected — requires explicit new ProbePage(page) in each test"
+          ]
+        },
+        {
+          "name": "Use",
+          "activities": [
+            "Writes tests using probe.query() for state assertions instead of screenshots",
+            "Replaces page.waitForTimeout() with probe.waitForPageReady()",
+            "Uses probe.actAndWait() for interaction + synchronization in one call",
+            "Uses probe.verifyLinkage() to validate data flow chains",
+            "Uses probe.runAcrossDevices() for responsive testing across device presets"
+          ],
+          "friction_points": [
+            "Requires frontend developer to have added annotations before query() returns data",
+            "actAndWait() action string parsing ('select:completed') is convention-based — easy to misformat"
+          ]
+        },
+        {
+          "name": "Extend",
+          "activities": [
+            "Creates domain-specific test utilities composing probe methods",
+            "Builds custom Playwright matchers beyond the 3 built-in ones",
+            "Uses snapshot/diff for regression testing baselines"
+          ],
+          "friction_points": [
+            "No documented plugin or extension API"
+          ]
+        }
+      ]
+    },
+    {
+      "persona": "DP2",
+      "persona_name": "Frontend Developer",
+      "stages": [
+        {
+          "name": "Discover",
+          "activities": [
+            "Learns about probe annotation from test engineer or README",
+            "Understands the annotation cost table from DESIGN.md section 5",
+            "Confirms that collector is only injected at test time — zero production impact"
+          ],
+          "friction_points": [
+            "DESIGN.md is in Chinese — no standalone English annotation guide exists"
+          ]
+        },
+        {
+          "name": "Integrate",
+          "activities": [
+            "Runs CLI instrument command to auto-annotate an existing codebase",
+            "Manually adds/refines probe annotations to key controls (5-10 per page)",
+            "Declares linkage targets for elements that drive downstream elements",
+            "Runs CLI validate to check for annotation errors"
+          ],
+          "friction_points": [
+            "Linkage path type selection (direct vs api vs store) requires understanding the data flow architecture",
+            "No IDE plugin for attribute autocomplete or inline validation"
+          ]
+        },
+        {
+          "name": "Use",
+          "activities": [
+            "Runs CLI validate to check for duplicate IDs, orphan linkages, circular linkages",
+            "Runs CLI report to see per-page and per-type annotation coverage",
+            "Keeps annotations updated as components evolve"
+          ],
+          "friction_points": [
+            "No warning when refactoring renames IDs that linkage targets reference"
+          ]
+        }
+      ]
+    },
+    {
+      "persona": "DP3",
+      "persona_name": "SDK Contributor",
+      "stages": [
+        {
+          "name": "Discover",
+          "activities": [
+            "Reads README.md and DESIGN.md section 4 (cross-platform SDK architecture diagram)",
+            "Identifies the 3-layer pattern: annotations → collector → actions"
+          ],
+          "friction_points": [
+            "No SDK porting guide or CONTRIBUTING.md",
+            "ProbeType enum divergence (7 vs 9 types in existing platforms) is undocumented"
+          ]
+        },
+        {
+          "name": "Integrate",
+          "activities": [
+            "Ports ProbeElement model to target language",
+            "Implements AnnotationParser equivalent reading platform-native metadata",
+            "Implements ElementRegistry using platform tree scanning APIs",
+            "Implements ActionDispatcher with 5-point pre-check pattern"
+          ],
+          "friction_points": [
+            "Pre-check pattern must be faithfully reproduced — error codes must match spec",
+            "Source tracking (network interception) is complex and varies significantly per platform"
+          ]
+        }
+      ]
+    }
+  ],
+  "design_principles": [
+    {
+      "name": "Annotation-Based, Not Intrusive",
+      "description": "The framework requires only declarative annotations on UI elements — no business logic coupling, no test framework code in production components. The runtime collector is injected exclusively at test time.",
+      "impact": "Frontend developers add 5-10 attribute annotations per page without changing component logic. Production builds exclude the collector entirely."
+    },
+    {
+      "name": "Event-Driven Waits, Not Polling",
+      "description": "All synchronization uses event notifications or MutationObserver, not setTimeout loops. waitForState() resolves the instant the state changes, not after a fixed delay.",
+      "impact": "Tests run as fast as the application, not on worst-case timing. A page that loads in 200ms resolves waitForPageReady() in ~200ms, not after a 2-second sleep."
+    },
+    {
+      "name": "Smart Pre-Checks on Every Action",
+      "description": "Every action method validates element state through a 5-point check sequence before dispatching. Failures throw structured ProbeActionError objects with machine-readable error codes.",
+      "impact": "Actions never silently fail. A click on a disabled button throws DISABLED with the validation error reason."
+    },
+    {
+      "name": "Automatic Linkage Verification",
+      "description": "When an element has linkage declarations, actions automatically verify that all downstream targets responded correctly — without any extra test code.",
+      "impact": "A single actAndWait() call tests the full data flow chain: action → state transition → linked targets → API calls."
+    },
+    {
+      "name": "Semantic Identity, Not Selector Fragility",
+      "description": "Elements are identified by stable semantic IDs (e.g. 'order-list', 'status-filter') rather than CSS selectors, XPath, or DOM structure.",
+      "impact": "UI refactors that rename CSS classes or restructure DOM hierarchy do not break tests."
+    },
+    {
+      "name": "Progressive Disclosure",
+      "description": "The minimum viable annotation is a single data-probe-id attribute. Additional attributes (type, state, source, linkage) add capability progressively without requiring upfront investment in the full model.",
+      "impact": "A developer can add data-probe-id to one element and immediately have query() returning data."
+    },
+    {
+      "name": "Platform Abstraction via Uniform Model",
+      "description": "All platforms map to the same ProbeElement model (15 attributes, 9 types) defined in spec/probe-types.ts. Test logic written against one platform's probe API is conceptually transferable to all others.",
+      "impact": "A test engineer writing against the probe API can transfer skills across platforms."
+    },
+    {
+      "name": "Convention Over Configuration",
+      "description": "Sensible defaults, shorthand formats, and auto-detection reduce explicit configuration. The source shorthand 'GET /api/orders' is easier than full JSON; device auto-detection works without any setup.",
+      "impact": "New annotations require only data-probe-id to function. Source bindings work with a simple URL string."
+    },
+    {
+      "name": "Hierarchy-Aware Visibility",
+      "description": "Visibility is not just a per-element flag but an ancestor-chain property. isEffectivelyVisible() walks the full parent chain, so a child with visible=true inside a hidden container correctly reports as not visible.",
+      "impact": "Visibility-toggle linkage effects are correctly verified without false positives."
+    }
+  ],
+  "platform_matrix": {
+    "web": {
+      "state": "complete",
+      "phase": 1,
+      "language": "TypeScript",
+      "framework": "DOM/Browser APIs",
+      "sdk_path": "sdk/web/",
+      "integration_path": "integrations/playwright/",
+      "annotation_idiom": "data-probe-* HTML attributes",
+      "network_interception": "fetch() + XMLHttpRequest override",
+      "test_framework": "Playwright"
+    },
+    "flutter": {
+      "state": "complete",
+      "phase": 2,
+      "language": "Dart",
+      "framework": "Flutter",
+      "sdk_path": "sdk/flutter/",
+      "integration_path": "integrations/flutter-test/",
+      "annotation_idiom": "ProbeWidget wrapper",
+      "network_interception": "HttpOverrides",
+      "test_framework": "flutter_test (WidgetTester)"
+    },
+    "ios": {
+      "state": "complete",
+      "phase": 3,
+      "language": "Swift",
+      "framework": "SwiftUI / UIKit",
+      "sdk_path": "sdk/ios/",
+      "integration_path": "integrations/xctest/",
+      "annotation_idiom": ".probeId() / .probeType() SwiftUI modifiers",
+      "network_interception": "not implemented",
+      "test_framework": "XCTest / XCUITest"
+    },
+    "android": {
+      "state": "complete",
+      "phase": 3,
+      "language": "Kotlin",
+      "framework": "Jetpack Compose",
+      "sdk_path": "sdk/android/",
+      "integration_path": "integrations/compose-test/",
+      "annotation_idiom": "Modifier.probeId() / probeType() Compose modifiers",
+      "network_interception": "not implemented",
+      "test_framework": "Compose UI Test (ComposeTestRule)"
+    },
+    "windows_wpf": {
+      "state": "complete",
+      "phase": 4,
+      "language": "C#",
+      "framework": "WPF (.NET 8.0-windows)",
+      "sdk_path": "sdk/windows-wpf/",
+      "integration_path": "integrations/wpf-test/",
+      "annotation_idiom": "Probe.Id attached DependencyProperty (XAML)",
+      "network_interception": "not implemented",
+      "test_framework": "WPF Test Automation"
+    },
+    "windows_winforms": {
+      "state": "complete",
+      "phase": 4,
+      "language": "C#",
+      "framework": "WinForms (.NET 8.0-windows)",
+      "sdk_path": "sdk/windows-winform/",
+      "integration_path": "integrations/winform-test/",
+      "annotation_idiom": "ProbeExtenderProvider IExtenderProvider (designer)",
+      "network_interception": "not implemented",
+      "test_framework": "WinForms Test Automation"
+    },
+    "windows_winui": {
+      "state": "complete",
+      "phase": 4,
+      "language": "C#",
+      "framework": "MAUI/WinUI (.NET 8.0-windows10)",
+      "sdk_path": "sdk/windows-winui/",
+      "integration_path": "integrations/winui-test/",
+      "annotation_idiom": "Probe.Id attached BindableProperty (XAML)",
+      "network_interception": "not implemented",
+      "test_framework": "WinUI/MAUI Test Automation"
+    },
+    "react_native": {
+      "state": "complete",
+      "phase": 4,
+      "language": "TypeScript",
+      "framework": "React Native",
+      "sdk_path": "sdk/react-native/",
+      "integration_path": "integrations/detox/",
+      "annotation_idiom": "useProbe() hook / withProbe() HOC",
+      "network_interception": "fetch/XHR override",
+      "test_framework": "Detox"
+    }
+  },
+  "implementation_roadmap": [
+    "Phase 1: Web SDK (TypeScript) + Playwright integration — reference implementation with all 6 primitives. Examples: web-react, web-vue.",
+    "Phase 2: Flutter SDK (Dart) + flutter_test integration — ProbeWidget, ProbeBinding, HttpOverrides. Example: flutter.",
+    "Phase 3: iOS SDK (Swift/SwiftUI) + XCTest integration; Android SDK (Kotlin/Compose) + Compose UI Test integration. Examples: ios-swiftui, android-compose.",
+    "Phase 4: Windows SDKs (WPF/WinForms/WinUI, C#) + test drivers; React Native SDK (TypeScript) + Detox integration; CLI tool (instrument/validate/report). Examples: windows-maui, react-native.",
+    "Phase 5: All example projects runnable with proper dependencies, cross-platform conformance test suite, CONTRIBUTING.md, English translations of DESIGN.md and SPEC.md."
+  ],
+  "documentation_state": {
+    "overall_quality": "partial",
+    "primary_gap": "No getting-started tutorial exists anywhere. A new user cannot follow a step-by-step guide from zero to a working test.",
+    "language_accessibility_issue": "SPEC.md and DESIGN.md are written in Chinese (Mandarin). This limits accessibility for non-Chinese-speaking contributors.",
+    "documents": [
+      {
+        "file": "README.md",
+        "language": "English",
+        "diataxis_type": "explanation",
+        "quality_rating": 3,
+        "critical_issue": "Code examples use 'page.probe.query()' shorthand that does not match the actual Playwright integration API (ProbePage wrapper)."
+      },
+      {
+        "file": "SPEC.md",
+        "language": "Chinese",
+        "diataxis_type": "explanation",
+        "quality_rating": 3,
+        "critical_issue": "Not accessible to English-speaking contributors without translation."
+      },
+      {
+        "file": "DESIGN.md",
+        "language": "Chinese with English code blocks",
+        "diataxis_type": "reference",
+        "quality_rating": 4,
+        "critical_issue": "Most complete document but inaccessible to non-Chinese readers. spec/conformance-tests/ referenced but does not exist."
+      }
+    ],
+    "top_3_recommendations": [
+      "Write a 15-minute getting started tutorial against examples/web-react/ — highest adoption impact.",
+      "Translate DESIGN.md to English or write an equivalent English technical reference.",
+      "Fix the README code examples to match the actual Playwright ProbePage API."
+    ]
+  }
+}

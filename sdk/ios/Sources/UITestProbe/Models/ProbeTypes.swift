@@ -1,37 +1,45 @@
 import Foundation
 
 /// Classification of UI elements by their semantic role.
+/// Matches the canonical 9-value spec in spec/probe-types.ts.
 public enum ProbeType: String, Codable, Sendable {
-    /// Interactive control (button, toggle, slider).
-    case control
-    /// Data display element (text, label, badge).
+    /// Table, DataGrid, List, Tree.
+    case dataContainer = "data-container"
+    /// ComboBox, Select, Dropdown.
+    case selector
+    /// Button, Link, MenuItem.
+    case action
+    /// Label, Badge, Counter, Chip.
     case display
-    /// Data input element (text field, picker, checkbox).
-    case input
-    /// Navigation element (tab, link, drawer item).
-    case navigation
-    /// Layout container (card, list, section).
-    case container
-    /// Media element (image, video, audio).
+    /// Image, Video, Audio, Canvas.
     case media
-    /// Feedback element (toast, snackbar, dialog).
-    case feedback
+    /// Input, TextArea, Checkbox, Radio.
+    case form
+    /// Page-level container — anchor for waitForPageReady().
+    case page
+    /// Dialog, Drawer, Popover, Tooltip.
+    case modal
+    /// Tabs, Breadcrumb, Sidebar, Paginator.
+    case navigation
 }
 
 /// The effect type of a linkage between probe elements.
+/// Matches the canonical 7-value spec in spec/probe-types.ts.
 public enum LinkageEffect: String, Codable, Sendable {
-    /// Navigates to a different screen or route.
-    case navigate
+    /// Updates available options in a selector.
+    case optionsUpdate = "options_update"
+    /// Triggers data reload via API.
+    case dataReload = "data_reload"
     /// Shows or hides another element.
-    case toggle
-    /// Triggers a data refresh or fetch.
-    case refresh
-    /// Submits data (form submission, API call).
-    case submit
-    /// Filters or sorts displayed data.
-    case filter
-    /// Opens a modal, dialog, or overlay.
-    case overlay
+    case visibilityToggle = "visibility_toggle"
+    /// Enables or disables another element.
+    case enabledToggle = "enabled_toggle"
+    /// Updates the value of another element.
+    case valueUpdate = "value_update"
+    /// Resets another element to default state.
+    case reset
+    /// Triggers navigation to a different route.
+    case navigate
 }
 
 /// Describes a linkage path from one probe element to another.

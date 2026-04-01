@@ -1,0 +1,30 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "tool": "gradle",
+  "packages": [
+    {
+      "path": "sdk/android",
+      "command": "gradle build",
+      "exit_code": 127,
+      "errors": [
+        "command not found: gradle — Gradle is not installed and no gradlew wrapper exists in the project"
+      ],
+      "status": "failed"
+    },
+    {
+      "path": "integrations/compose-test",
+      "command": "gradle build",
+      "exit_code": 127,
+      "errors": [
+        "command not found: gradle — Gradle is not installed and no gradlew wrapper exists in the project"
+      ],
+      "status": "failed"
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "passed": 0,
+    "failed": 2,
+    "skipped": 0
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "": {
+    "swift-dependencies": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/primary.swiftdeps"
+  },
+  "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Actions/ActionDispatcher.swift": {
+    "dependencies": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ActionDispatcher.d",
+    "object": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ActionDispatcher.swift.o",
+    "swiftmodule": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ActionDispatcher~partial.swiftmodule",
+    "swift-dependencies": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ActionDispatcher.swiftdeps",
+    "diagnostics": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ActionDispatcher.dia"
+  },
+  "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Annotations/ProbeModifiers.swift": {
+    "dependencies": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeModifiers.d",
+    "object": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeModifiers.swift.o",
+    "swiftmodule": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeModifiers~partial.swiftmodule",
+    "swift-dependencies": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeModifiers.swiftdeps",
+    "diagnostics": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeModifiers.dia"
+  },
+  "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Collector/ProbeRegistry.swift": {
+    "dependencies": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeRegistry.d",
+    "object": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeRegistry.swift.o",
+    "swiftmodule": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeRegistry~partial.swiftmodule",
+    "swift-dependencies": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeRegistry.swiftdeps",
+    "diagnostics": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeRegistry.dia"
+  },
+  "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Models/ProbeTypes.swift": {
+    "dependencies": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeTypes.d",
+    "object": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeTypes.swift.o",
+    "swiftmodule": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeTypes~partial.swiftmodule",
+    "swift-dependencies": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeTypes.swiftdeps",
+    "diagnostics": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeTypes.dia"
+  }
+}

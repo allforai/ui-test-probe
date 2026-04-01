@@ -1,0 +1,176 @@
+{
+  "generated_at": "2026-04-01T13:20:00Z",
+  "project": "ui-test-probe",
+  "goal": "Functional verification — compile + E2E",
+  "sections": [
+    {
+      "name": "Compile Verification",
+      "platforms": [
+        {
+          "platform": "typescript",
+          "tool": "tsc",
+          "packages": 4,
+          "passed": 3,
+          "failed": 1,
+          "status": "partial",
+          "issues": [
+            {
+              "package": "sdk/react-native",
+              "severity": "error",
+              "count": 16,
+              "root_cause": "source-tracker.ts uses DOM globals (XMLHttpRequest, RequestInfo) not available in React Native type environment",
+              "fix": "Add RN-specific type declarations or conditionally exclude source-tracker from RN build"
+            }
+          ]
+        },
+        {
+          "platform": "flutter",
+          "tool": "flutter analyze",
+          "packages": 2,
+          "passed": 1,
+          "failed": 1,
+          "status": "partial",
+          "issues": [
+            {
+              "package": "sdk/flutter",
+              "severity": "error",
+              "count": 2,
+              "root_cause": "source_tracker.dart references undefined class 'Encoding' — missing 'dart:convert' import",
+              "fix": "Add 'import dart:convert;' to source_tracker.dart"
+            }
+          ]
+        },
+        {
+          "platform": "ios",
+          "tool": "swift build",
+          "packages": 2,
+          "passed": 0,
+          "failed": 2,
+          "status": "fail",
+          "issues": [
+            {
+              "package": "sdk/ios",
+              "severity": "error",
+              "count": 1,
+              "root_cause": "ProbeType.input reference — FIXED during this session (changed to .form)",
+              "fix": "Already fixed. Re-run swift build to verify.",
+              "fixed_in_session": true
+            }
+          ]
+        },
+        {
+          "platform": "android",
+          "tool": "gradle",
+          "packages": 2,
+          "passed": 0,
+          "failed": 2,
+          "status": "env-missing",
+          "issues": [
+            {
+              "package": "sdk/android + integrations/compose-test",
+              "severity": "environment",
+              "count": 1,
+              "root_cause": "gradle CLI not installed, no gradlew wrapper in project",
+              "fix": "Add gradlew wrapper (gradle wrapper --gradle-version 8.x) or install Gradle CLI"
+            }
+          ]
+        },
+        {
+          "platform": "windows (.NET)",
+          "tool": "dotnet build",
+          "packages": 7,
+          "passed": 0,
+          "failed": 0,
+          "status": "skipped",
+          "issues": [
+            {
+              "severity": "environment",
+              "root_cause": ".NET SDK not available on this machine",
+              "fix": "Install .NET 8 SDK to verify windows-core/wpf/winform/winui"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "E2E Verification (Web SDK + Playwright)",
+      "apps": [
+        {
+          "app": "examples/web-react",
+          "browser": "chromium",
+          "total_tests": 10,
+          "passed": 10,
+          "failed": 0,
+          "status": "pass",
+          "duration_ms": 1973,
+          "primitives_verified": [
+            "element-registry",
+            "state-exposure",
+            "event-stream",
+            "source-binding",
+            "layout-metrics",
+            "action-dispatch"
+          ],
+          "auxiliary_verified": [
+            "hierarchy",
+            "page-query"
+          ]
+        }
+      ],
+      "existing_tests": {
+        "file": "examples/web-react/tests/order-page.spec.ts",
+        "total": 11,
+        "passed": 11,
+        "status": "pass"
+      }
+    }
+  ],
+  "overall_status": "partial",
+  "summary": {
+    "compile": {
+      "platforms_tested": 4,
+      "platforms_passed": 1,
+      "platforms_partial": 2,
+      "platforms_env_missing": 1,
+      "platforms_skipped": 1
+    },
+    "e2e": {
+      "apps_tested": 1,
+      "apps_passed": 1,
+      "all_6_primitives_verified": true
+    }
+  },
+  "issues_to_fix": [
+    {
+      "priority": "high",
+      "issue": "sdk/react-native source-tracker uses DOM globals not available in RN",
+      "fix": "Provide RN-specific XHR type declarations or use RN networking APIs"
+    },
+    {
+      "priority": "medium",
+      "issue": "sdk/flutter source_tracker.dart missing dart:convert import",
+      "fix": "Add 'import dart:convert;'"
+    },
+    {
+      "priority": "medium",
+      "issue": "Android projects lack Gradle wrapper",
+      "fix": "Run 'gradle wrapper' in sdk/android and integrations/compose-test"
+    },
+    {
+      "priority": "low",
+      "issue": "sdk/ios ActionDispatcher.swift unused variable warning",
+      "fix": "Replace 'let element' with '_' at line 230"
+    },
+    {
+      "priority": "low",
+      "issue": "integrations/flutter-test uses deprecated window API",
+      "fix": "Migrate to WidgetTester.view API"
+    }
+  ],
+  "recommendations": [
+    "Fix high-priority RN type issue before Phase 4 implementation",
+    "Add Gradle wrapper to Android projects for CI reproducibility",
+    "Re-run iOS compile after the .input→.form fix applied this session",
+    "Consider adding E2E tests for Flutter (flutter test) when Flutter SDK implementation progresses"
+  ]
+}

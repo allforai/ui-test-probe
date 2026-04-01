@@ -1,0 +1,3 @@
+module UITestProbePackageTests {
+    header "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.build/include/UITestProbePackageTests-Swift.h"
+}

@@ -1,8 +1,9 @@
-using UITestProbe.Collector;
-using UITestProbe.Actions;
-using UITestProbe.Models;
+using UITestProbe.WinUI.Collector;
+using UITestProbe.WinUI.Actions;
+using UITestProbe.Core.Actions;
+using UITestProbe.Core.Models;
 
-namespace UITestProbe.Net;
+namespace UITestProbe.WinUITest;
 
 /// <summary>
 /// High-level test driver wrapping UI Automation and the probe SDK.
@@ -11,8 +12,8 @@ namespace UITestProbe.Net;
 /// </summary>
 public class ProbeDriver
 {
-    private readonly ProbeRegistry _registry;
-    private readonly ActionDispatcher _dispatcher;
+    private readonly MauiProbeRegistry _registry;
+    private readonly MauiActionDispatcher _dispatcher;
     private Microsoft.Maui.Controls.VisualElement? _root;
     private string? _currentDevice;
 
@@ -42,8 +43,8 @@ public class ProbeDriver
     /// <param name="app">The MAUI Application instance to instrument.</param>
     public ProbeDriver(object app)
     {
-        _registry = new ProbeRegistry();
-        _dispatcher = new ActionDispatcher(_registry);
+        _registry = new MauiProbeRegistry();
+        _dispatcher = new MauiActionDispatcher(_registry);
 
         // Obtain root page from the MAUI Application
         if (app is Microsoft.Maui.Controls.Application mauiApp)
@@ -57,7 +58,8 @@ public class ProbeDriver
 
         if (_root != null)
         {
-            _registry.Scan(_root);
+            _registry.SetRoot(_root);
+            _registry.Scan();
         }
     }
 
@@ -67,7 +69,10 @@ public class ProbeDriver
     public void Rescan()
     {
         if (_root != null)
-            _registry.Scan(_root);
+        {
+            _registry.SetRoot(_root);
+            _registry.Scan();
+        }
     }
 
     // -- Element Registry --
@@ -106,7 +111,10 @@ public class ProbeDriver
         {
             // Re-scan to pick up dynamic element changes
             if (_root != null)
-                _registry.Scan(_root);
+            {
+                _registry.SetRoot(_root);
+                _registry.Scan();
+            }
 
             var page = _registry.QueryPage();
             if (page.State == "loaded" && page.UnreadyElements.Count == 0)

@@ -10,7 +10,7 @@ import 'probe_types.dart';
 /// ```dart
 /// ProbeWidget(
 ///   id: 'login-submit',
-///   type: ProbeType.control,
+///   type: ProbeType.action,
 ///   state: {'enabled': true},
 ///   child: ElevatedButton(onPressed: _login, child: Text('Login')),
 /// )

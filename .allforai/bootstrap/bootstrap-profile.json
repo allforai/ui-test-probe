@@ -1,0 +1,203 @@
+{
+  "schema_version": "1.0",
+  "project_name": "ui-test-probe",
+  "business_domain": "developer-tools",
+  "business_context": "Cross-platform UI test observability framework that transforms black-box screenshot testing into white-box state queries via 6 primitives (Element Registry, State Exposure, Event Stream, Source Binding, Layout Metrics, Action Dispatch).",
+  "tech_stacks": [
+    {
+      "role": "shared",
+      "language": "TypeScript",
+      "language_version": "5.5+",
+      "framework": "N/A (spec layer)",
+      "build_tool": "tsc"
+    },
+    {
+      "role": "frontend",
+      "language": "TypeScript",
+      "language_version": "5.5+",
+      "framework": "DOM API (vanilla)",
+      "build_tool": "tsc + esbuild"
+    },
+    {
+      "role": "frontend",
+      "language": "Dart",
+      "language_version": "3.x",
+      "framework": "Flutter 3.41",
+      "build_tool": "flutter"
+    },
+    {
+      "role": "frontend",
+      "language": "Swift",
+      "language_version": "6.2",
+      "framework": "SwiftUI",
+      "build_tool": "Xcode 26 / swift build"
+    },
+    {
+      "role": "frontend",
+      "language": "Kotlin",
+      "language_version": "2.x",
+      "framework": "Jetpack Compose",
+      "build_tool": "Gradle (Kotlin DSL)"
+    },
+    {
+      "role": "frontend",
+      "language": "C#",
+      "language_version": "12+",
+      "framework": "WinUI / MAUI",
+      "build_tool": "dotnet"
+    },
+    {
+      "role": "frontend",
+      "language": "TypeScript",
+      "language_version": "5.5+",
+      "framework": "React Native",
+      "build_tool": "tsc"
+    }
+  ],
+  "goals": ["analyze"],
+  "product_vision": null,
+  "target_stacks": [],
+  "ui_fidelity": null,
+  "modules": [
+    {
+      "id": "M001",
+      "path": "spec/",
+      "role": "shared",
+      "description": "Platform-agnostic specification: JSON Schema, TypeScript types, device presets"
+    },
+    {
+      "id": "M002",
+      "path": "sdk/web/",
+      "role": "frontend",
+      "description": "Web SDK (TypeScript) — reference implementation, most complete"
+    },
+    {
+      "id": "M003",
+      "path": "sdk/flutter/",
+      "role": "frontend",
+      "description": "Flutter SDK (Dart) — scaffolded with stubs"
+    },
+    {
+      "id": "M004",
+      "path": "sdk/ios/",
+      "role": "frontend",
+      "description": "iOS SDK (Swift/SwiftUI) — scaffolded with stubs"
+    },
+    {
+      "id": "M005",
+      "path": "sdk/android/",
+      "role": "frontend",
+      "description": "Android SDK (Kotlin/Compose) — scaffolded with stubs"
+    },
+    {
+      "id": "M006",
+      "path": "sdk/windows-core/",
+      "role": "shared",
+      "description": "Windows shared core — models, interfaces, base action dispatcher"
+    },
+    {
+      "id": "M006a",
+      "path": "sdk/windows-wpf/",
+      "role": "frontend",
+      "description": "Windows WPF SDK — DependencyProperty annotations + VisualTreeHelper registry"
+    },
+    {
+      "id": "M006b",
+      "path": "sdk/windows-winform/",
+      "role": "frontend",
+      "description": "Windows WinForms SDK — ExtenderProvider annotations + Control tree registry"
+    },
+    {
+      "id": "M006c",
+      "path": "sdk/windows-winui/",
+      "role": "frontend",
+      "description": "Windows WinUI/MAUI SDK — BindableProperty annotations"
+    },
+    {
+      "id": "M007",
+      "path": "sdk/react-native/",
+      "role": "frontend",
+      "description": "React Native SDK (TypeScript) — scaffolded with stubs"
+    },
+    {
+      "id": "M008",
+      "path": "integrations/playwright/",
+      "role": "frontend",
+      "description": "Playwright test integration — wraps Web SDK for E2E testing"
+    },
+    {
+      "id": "M009",
+      "path": "integrations/flutter-test/",
+      "role": "frontend",
+      "description": "Flutter test integration"
+    },
+    {
+      "id": "M010",
+      "path": "integrations/xctest/",
+      "role": "frontend",
+      "description": "iOS XCTest integration"
+    },
+    {
+      "id": "M011",
+      "path": "integrations/compose-test/",
+      "role": "frontend",
+      "description": "Android Compose test integration"
+    },
+    {
+      "id": "M012",
+      "path": "integrations/wpf-test/",
+      "role": "frontend",
+      "description": "WPF test integration"
+    },
+    {
+      "id": "M012a",
+      "path": "integrations/winform-test/",
+      "role": "frontend",
+      "description": "WinForms test integration"
+    },
+    {
+      "id": "M012b",
+      "path": "integrations/winui-test/",
+      "role": "frontend",
+      "description": "Windows WinUI test integration"
+    },
+    {
+      "id": "M013",
+      "path": "integrations/detox/",
+      "role": "frontend",
+      "description": "React Native Detox test integration"
+    },
+    {
+      "id": "M014",
+      "path": "tools/cli/",
+      "role": "shared",
+      "description": "CLI tool: instrument, validate, report commands"
+    },
+    {
+      "id": "M015",
+      "path": "examples/",
+      "role": "shared",
+      "description": "7 platform demo apps (web-react, web-vue, flutter, ios, android, windows, rn)"
+    }
+  ],
+  "build_commands": {
+    "web-sdk": "cd sdk/web && npm run build",
+    "cli": "cd tools/cli && npm run build"
+  },
+  "test_commands": {
+    "web-sdk": "cd sdk/web && npm run typecheck"
+  },
+  "detected_patterns": [
+    "Cross-platform SDK monorepo",
+    "Shared spec with platform-specific SDKs",
+    "Two-layer architecture (annotation + runtime collector)",
+    "6 primitives pattern (registry/state/events/source/layout/actions)",
+    "MutationObserver + IntersectionObserver + PerformanceObserver",
+    "fetch/XHR interception for source tracking",
+    "window.__probe__ global API exposure",
+    "Device preset matrix testing"
+  ],
+  "architecture_pattern": "Modular SDK monorepo — shared spec + per-platform SDK + per-platform test integration",
+  "complexity_estimate": "high",
+  "requires_runtime_env": false
+}

@@ -1,0 +1,287 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "source_files_read": [
+    "README.md",
+    "SPEC.md",
+    "DESIGN.md",
+    "integrations/playwright/src/inject.ts",
+    "integrations/playwright/src/probe-page.ts",
+    "integrations/playwright/src/matchers.ts"
+  ],
+  "journeys": [
+    {
+      "persona": "DP1",
+      "persona_name": "Test Engineer",
+      "stages": [
+        {
+          "name": "Discover",
+          "activities": [
+            "Reads README.md to understand the 6 primitives and two-layer architecture",
+            "Views the code examples showing query/waitForPageReady/actAndWait patterns",
+            "Understands the '7 testing pain points' table and maps to own testing frustrations",
+            "Sees the '60 pages in 15-30 min vs 2+ hours' efficiency claim"
+          ],
+          "artifacts": ["README.md"],
+          "friction_points": [
+            "README examples use page.probe shorthand but the actual Playwright integration requires ProbePage wrapper — the setup step is not shown",
+            "No quick-start tutorial scoped to a specific framework (React+Playwright, Flutter, etc.)",
+            "README platform coverage table shows 'Phase X' status labels that don't clearly map to 'can I use this today?'"
+          ]
+        },
+        {
+          "name": "Evaluate",
+          "activities": [
+            "Reads DESIGN.md for full API surface and linkage model details",
+            "Reviews example project for own platform to see annotation patterns",
+            "Checks spec/probe-types.ts to understand the type contract",
+            "Compares against current test approach to estimate friction reduction"
+          ],
+          "artifacts": ["DESIGN.md", "spec/probe-types.ts", "examples/web-react/tests/order-page.spec.ts", "examples/web-react/src/OrderPage.tsx"],
+          "friction_points": [
+            "DESIGN.md is written in Chinese — English developers need translation assistance",
+            "Example projects are not runnable yet (depend on SDK builds not published)",
+            "No benchmark data or case study comparing probe vs pure Playwright selector approach"
+          ]
+        },
+        {
+          "name": "Integrate",
+          "activities": [
+            "Installs integration package (@allforai/ui-test-probe-playwright)",
+            "Builds sdk/web IIFE bundle (npm run build in sdk/web/) as prerequisite",
+            "Adds injectProbe() to test setup / playwright.config.ts global fixtures",
+            "Wraps Playwright Page in ProbePage for typed probe access",
+            "Registers custom matchers (toHaveProbeState, toHaveProbeData, toBeEffectivelyVisible) via expect.extend()"
+          ],
+          "artifacts": [
+            "integrations/playwright/src/inject.ts",
+            "integrations/playwright/src/probe-page.ts",
+            "integrations/playwright/src/matchers.ts"
+          ],
+          "friction_points": [
+            "Must build sdk/web IIFE bundle first — dist/probe-bundle.js dependency is not pre-published",
+            "No documented global setup pattern for Playwright fixtures",
+            "ProbePage is not automatically injected — requires explicit new ProbePage(page) in each test"
+          ]
+        },
+        {
+          "name": "Use",
+          "activities": [
+            "Writes tests using probe.query() for state assertions instead of screenshots",
+            "Replaces page.waitForTimeout() with probe.waitForPageReady()",
+            "Uses probe.actAndWait() for interaction + synchronization in one call",
+            "Uses probe.verifyLinkage() to validate data flow chains",
+            "Uses probe.runAcrossDevices() for responsive testing across device presets",
+            "Uses snapshot()/diff() to create regression baselines"
+          ],
+          "artifacts": ["spec/probe-types.ts (type reference)"],
+          "friction_points": [
+            "Requires frontend developer to have added annotations before query() returns data",
+            "If annotation missing, query() returns null with no guidance on what annotation to add",
+            "actAndWait() action string parsing ('select:completed') is convention-based — easy to misformat",
+            "verifyLinkage() timeout is fixed at 5000ms in web SDK — no option to configure"
+          ]
+        },
+        {
+          "name": "Extend",
+          "activities": [
+            "Creates domain-specific test utilities composing probe methods",
+            "Builds custom Playwright matchers beyond the 3 built-in ones",
+            "Uses snapshot/diff for regression testing baselines"
+          ],
+          "artifacts": [],
+          "friction_points": [
+            "No documented plugin or extension API",
+            "Snapshot format may change between versions with no migration guide"
+          ]
+        },
+        {
+          "name": "Contribute",
+          "activities": [
+            "Reports issues with platform-specific behavior",
+            "Proposes new ProbeType or LinkageEffect additions via GitHub"
+          ],
+          "artifacts": ["CLAUDE.md (project context)"],
+          "friction_points": [
+            "No CONTRIBUTING.md with contribution guidelines",
+            "No conformance test suite to validate cross-platform consistency (referenced in DESIGN.md but not present)",
+            "Spec change process is informal"
+          ]
+        }
+      ]
+    },
+    {
+      "persona": "DP2",
+      "persona_name": "Frontend Developer",
+      "stages": [
+        {
+          "name": "Discover",
+          "activities": [
+            "Learns about probe annotation from test engineer or README",
+            "Understands the annotation cost table from DESIGN.md section 5 (5-30 min per page)",
+            "Confirms that collector is only injected at test time — zero production impact"
+          ],
+          "artifacts": ["README.md", "DESIGN.md (section 5: annotation cost)"],
+          "friction_points": [
+            "DESIGN.md is in Chinese — no standalone English annotation guide exists",
+            "README does not clearly explain that only the annotation layer is added to production code"
+          ]
+        },
+        {
+          "name": "Evaluate",
+          "activities": [
+            "Reviews platform-specific annotation table in DESIGN.md section 4",
+            "Reviews example OrderPage for own platform",
+            "Understands linkage declaration format from DESIGN.md examples"
+          ],
+          "artifacts": ["DESIGN.md (section 4: annotation table)", "examples/*/src/OrderPage.*"],
+          "friction_points": [
+            "9 ProbeTypes available but no decision guide for which to pick for a given widget",
+            "Linkage JSON format is complex — no schema validation or IDE autocomplete available",
+            "No examples of linkage declarations for computed or store path types"
+          ]
+        },
+        {
+          "name": "Integrate",
+          "activities": [
+            "Runs CLI instrument command to auto-annotate an existing codebase",
+            "Manually adds/refines probe annotations to key controls (5-10 per page)",
+            "Declares linkage targets for elements that drive downstream elements",
+            "Runs CLI validate to check for annotation errors"
+          ],
+          "artifacts": ["tools/cli/src/commands/instrument.ts"],
+          "friction_points": [
+            "CLI instrument auto-generates IDs that may be generic (counter strategy) rather than semantic",
+            "Linkage path type selection (direct vs api vs store) requires understanding the data flow architecture",
+            "No IDE plugin for attribute autocomplete or inline validation"
+          ]
+        },
+        {
+          "name": "Use",
+          "activities": [
+            "Runs CLI validate to check for duplicate IDs, orphan linkages, circular linkages",
+            "Reviews validate output and fixes annotation issues",
+            "Runs CLI report to see per-page and per-type annotation coverage",
+            "Keeps annotations updated as components evolve"
+          ],
+          "artifacts": ["tools/cli/src/commands/validate.ts", "tools/cli/src/commands/report.ts"],
+          "friction_points": [
+            "Validate is static analysis only — does not catch runtime-generated component annotation issues",
+            "No warning when refactoring renames IDs that linkage targets reference",
+            "Keeping linkage declarations in sync with actual data flow requires manual discipline"
+          ]
+        },
+        {
+          "name": "Extend",
+          "activities": [
+            "Adds annotations for new features/components",
+            "Maintains linkage declarations as data flow architecture changes",
+            "Uses dev-forge for auto-generated code that includes annotations from the start"
+          ],
+          "artifacts": [],
+          "friction_points": [
+            "No refactoring-aware tooling to update linkage targets when element IDs change"
+          ]
+        },
+        {
+          "name": "Contribute",
+          "activities": [
+            "Proposes new annotation attributes for domain-specific needs",
+            "Reports issues with CLI instrument patterns for specific frameworks"
+          ],
+          "artifacts": [],
+          "friction_points": [
+            "No formal process for proposing spec attribute additions"
+          ]
+        }
+      ]
+    },
+    {
+      "persona": "DP3",
+      "persona_name": "SDK Contributor",
+      "stages": [
+        {
+          "name": "Discover",
+          "activities": [
+            "Reads README.md and DESIGN.md section 4 (cross-platform SDK architecture diagram)",
+            "Reviews .allforai/product-map/source-summary.json for module structure",
+            "Identifies the 3-layer pattern: annotations → collector → actions"
+          ],
+          "artifacts": ["README.md", "DESIGN.md", ".allforai/product-map/source-summary.json"],
+          "friction_points": [
+            "No SDK porting guide or CONTRIBUTING.md",
+            "DESIGN.md is in Chinese",
+            "ProbeType enum divergence (7 vs 9 types in existing platforms) is undocumented"
+          ]
+        },
+        {
+          "name": "Evaluate",
+          "activities": [
+            "Reads spec/probe-types.ts as the interface contract",
+            "Reads sdk/web/ as the reference implementation in detail",
+            "Reads an existing platform SDK (e.g. sdk/flutter/) to understand adaptation patterns",
+            "Identifies which UITestProbe methods are most complex to implement on target platform"
+          ],
+          "artifacts": ["spec/probe-types.ts", "sdk/web/src/probe.ts", "sdk/web/src/actions/dispatcher.ts", "sdk/flutter/lib/src/collector/probe_binding.dart"],
+          "friction_points": [
+            "No conformance test suite to know when implementation is complete",
+            "getOverlaps() has no clear equivalent on native platforms",
+            "snapshot/diff are only implemented on web — unclear if these are required"
+          ]
+        },
+        {
+          "name": "Integrate",
+          "activities": [
+            "Scaffolds sdk/{platform}/ directory structure (annotations/, collector/, actions/)",
+            "Ports ProbeElement model to target language",
+            "Implements AnnotationParser equivalent reading platform-native metadata",
+            "Implements ElementRegistry using platform tree scanning APIs",
+            "Implements StateObserver using platform change notification APIs",
+            "Implements ActionDispatcher with 5-point pre-check pattern"
+          ],
+          "artifacts": ["spec/probe-types.ts", "sdk/web/src/actions/dispatcher.ts (pre-check pattern)", "sdk/web/src/collector/state-observer.ts (event-driven wait pattern)"],
+          "friction_points": [
+            "Pre-check pattern must be faithfully reproduced — NOT_FOUND/NOT_VISIBLE/DISABLED/BUSY/OPTION_NOT_FOUND error codes must match",
+            "MutationObserver (web) has no direct equivalent on native platforms — must use polling or platform notification APIs",
+            "Source tracking (network interception) is complex and varies significantly per platform"
+          ]
+        },
+        {
+          "name": "Use",
+          "activities": [
+            "Runs example project tests against own implementation",
+            "Tests each ProbeType annotation and verifies ProbeElement fields are populated correctly",
+            "Tests pre-check error paths (disabled element, loading element, missing element)"
+          ],
+          "artifacts": ["examples/{platform}/ — reference test files"],
+          "friction_points": [
+            "Example projects are not runnable yet",
+            "No cross-platform comparison test to verify field-level parity"
+          ]
+        },
+        {
+          "name": "Extend",
+          "activities": [
+            "Adds platform-specific optimizations (e.g. native accessibility APIs for better metadata)",
+            "Documents any known divergences from spec"
+          ],
+          "artifacts": [],
+          "friction_points": [
+            "No versioning strategy for spec changes that may require SDK updates"
+          ]
+        },
+        {
+          "name": "Contribute",
+          "activities": [
+            "Submits PR with new platform SDK",
+            "Updates source-summary.json and file-catalog.json",
+            "Adds example project for the new platform"
+          ],
+          "artifacts": [".allforai/product-map/source-summary.json", ".allforai/product-map/file-catalog.json"],
+          "friction_points": [
+            "No automated CI to run cross-platform conformance checks on PR"
+          ]
+        }
+      ]
+    }
+  ]
+}

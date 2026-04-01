@@ -2,40 +2,48 @@ package com.allforai.uitestprobe.models
 
 /**
  * Classification of UI elements by their semantic role.
+ * Matches the canonical 9-value spec in spec/probe-types.ts.
  */
 enum class ProbeType {
-    /** Interactive control (button, toggle, slider). */
-    CONTROL,
-    /** Data display element (text, label, badge). */
+    /** Table, DataGrid, List, Tree. */
+    DATA_CONTAINER,
+    /** ComboBox, Select, Dropdown. */
+    SELECTOR,
+    /** Button, Link, MenuItem. */
+    ACTION,
+    /** Label, Badge, Counter, Chip. */
     DISPLAY,
-    /** Data input element (text field, picker, checkbox). */
-    INPUT,
-    /** Navigation element (tab, link, drawer item). */
-    NAVIGATION,
-    /** Layout container (card, list, section). */
-    CONTAINER,
-    /** Media element (image, video, audio). */
+    /** Image, Video, Audio, Canvas. */
     MEDIA,
-    /** Feedback element (toast, snackbar, dialog). */
-    FEEDBACK,
+    /** Input, TextArea, Checkbox, Radio. */
+    FORM,
+    /** Page-level container — anchor for waitForPageReady(). */
+    PAGE,
+    /** Dialog, Drawer, Popover, Tooltip. */
+    MODAL,
+    /** Tabs, Breadcrumb, Sidebar, Paginator. */
+    NAVIGATION,
 }
 
 /**
  * The effect type of a linkage between probe elements.
+ * Matches the canonical 7-value spec in spec/probe-types.ts.
  */
 enum class LinkageEffect {
-    /** Navigates to a different screen or route. */
-    NAVIGATE,
+    /** Updates available options in a selector. */
+    OPTIONS_UPDATE,
+    /** Triggers data reload via API. */
+    DATA_RELOAD,
     /** Shows or hides another element. */
-    TOGGLE,
-    /** Triggers a data refresh or fetch. */
-    REFRESH,
-    /** Submits data (form submission, API call). */
-    SUBMIT,
-    /** Filters or sorts displayed data. */
-    FILTER,
-    /** Opens a modal, dialog, or overlay. */
-    OVERLAY,
+    VISIBILITY_TOGGLE,
+    /** Enables or disables another element. */
+    ENABLED_TOGGLE,
+    /** Updates the value of another element. */
+    VALUE_UPDATE,
+    /** Resets another element to default state. */
+    RESET,
+    /** Triggers navigation to a different route. */
+    NAVIGATE,
 }
 
 /**

@@ -1,0 +1,56 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "tool": "tsc",
+  "packages": [
+    {
+      "path": "sdk/web",
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "errors": [],
+      "status": "pass"
+    },
+    {
+      "path": "integrations/playwright",
+      "command": "npx tsc --noEmit",
+      "exit_code": 0,
+      "errors": [],
+      "status": "pass"
+    },
+    {
+      "path": "sdk/react-native",
+      "command": "npx tsc --noEmit",
+      "exit_code": 2,
+      "errors": [
+        "src/annotations/probe-props.ts(115,22): error TS2352: Conversion of type 'PropsWithoutRef<Omit<P, keyof NativeProbeProps>> & { ref: ForwardedRef<unknown>; testID: string; accessibilityLabel: string; accessibilityHint: string; }' to type 'P' may be a mistake because neither type sufficiently overlaps with the other.",
+        "src/collector/source-tracker.ts(30,35): error TS2304: Cannot find name 'XMLHttpRequest'.",
+        "src/collector/source-tracker.ts(31,35): error TS2304: Cannot find name 'XMLHttpRequest'.",
+        "src/collector/source-tracker.ts(63,14): error TS2552: Cannot find name 'RequestInfo'. Did you mean 'RequestInit'?",
+        "src/collector/source-tracker.ts(101,16): error TS2304: Cannot find name 'XMLHttpRequest'.",
+        "src/collector/source-tracker.ts(102,30): error TS2304: Cannot find name 'XMLHttpRequest'.",
+        "src/collector/source-tracker.ts(103,30): error TS2304: Cannot find name 'XMLHttpRequest'.",
+        "src/collector/source-tracker.ts(105,7): error TS2304: Cannot find name 'XMLHttpRequest'.",
+        "src/collector/source-tracker.ts(106,15): error TS2304: Cannot find name 'XMLHttpRequest'.",
+        "src/collector/source-tracker.ts(115,55): error TS2304: Cannot find name 'XMLHttpRequest'.",
+        "src/collector/source-tracker.ts(119,7): error TS2304: Cannot find name 'XMLHttpRequest'.",
+        "src/collector/source-tracker.ts(120,15): error TS2304: Cannot find name 'XMLHttpRequest'.",
+        "src/collector/source-tracker.ts(121,27): error TS2304: Cannot find name 'XMLHttpRequestBodyInit'.",
+        "src/collector/source-tracker.ts(154,16): error TS2304: Cannot find name 'XMLHttpRequest'.",
+        "src/collector/source-tracker.ts(156,9): error TS2304: Cannot find name 'XMLHttpRequest'.",
+        "src/collector/source-tracker.ts(160,9): error TS2304: Cannot find name 'XMLHttpRequest'."
+      ],
+      "status": "fail"
+    },
+    {
+      "path": "tools/cli",
+      "command": "npx tsc --noEmit",
+      "exit_code": 0,
+      "errors": [],
+      "status": "pass"
+    }
+  ],
+  "summary": {
+    "total": 4,
+    "passed": 3,
+    "failed": 1
+  }
+}

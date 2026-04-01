@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>UITestProbe.WinFormTest</RootNamespace>
+    <PackageId>AllForAI.UITestProbe.WinFormTest</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>AllForAI</Authors>
+    <Description>WinForms test integration for UI Test Probe — test driver for WinForms applications</Description>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../sdk/windows-winform/UITestProbe.WinForms.csproj" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.*" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.*" />
+  </ItemGroup>
+</Project>

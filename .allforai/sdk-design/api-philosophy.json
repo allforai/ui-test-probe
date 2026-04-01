@@ -1,0 +1,116 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "source_files_read": [
+    "spec/probe-types.ts",
+    "sdk/web/src/probe.ts",
+    "sdk/web/src/actions/dispatcher.ts",
+    "sdk/web/src/annotations/parser.ts",
+    "sdk/web/src/collector/state-observer.ts",
+    "sdk/web/src/collector/event-stream.ts",
+    "sdk/web/src/browser-entry.ts",
+    "SPEC.md",
+    "DESIGN.md",
+    "README.md"
+  ],
+  "principles": [
+    {
+      "name": "Annotation-Based, Not Intrusive",
+      "description": "The framework requires only declarative annotations on UI elements — no business logic coupling, no test framework code in production components. The runtime collector is injected exclusively at test time.",
+      "evidence": [
+        "sdk/web/src/browser-entry.ts: 'Creates WebProbe with config from window.__probeConfig__, defers DOM scan until DOMContentLoaded.' The entire runtime is an IIFE injected via page.addInitScript() — zero production footprint.",
+        "sdk/web/src/annotations/parser.ts: AnnotationParser only reads data-probe-* HTML attributes — standard HTML data attributes that are ignored by production code.",
+        "DESIGN.md section 4: 'Collector injection mechanism: Web → addInitScript() — Production impact: zero. Flutter → WidgetTester — zero. iOS → XCUITest — zero.'",
+        "SPEC.md design principle: 'Zero business logic coupling — not reading business code to design tests, only observing UI layer display objects and state.'"
+      ],
+      "impact": "Frontend developers add 5-10 attribute annotations per page without changing component logic. Production builds exclude the collector entirely."
+    },
+    {
+      "name": "Event-Driven Waits, Not Polling",
+      "description": "All synchronization uses event notifications or MutationObserver, not setTimeout loops. waitForState() resolves the instant the state changes, not after a fixed delay.",
+      "evidence": [
+        "sdk/web/src/collector/state-observer.ts: StateObserver uses MutationObserver watching 'data-probe-state' attributeFilter. The waitForState() method subscribes to 'state-change:{id}' event — no setInterval or polling loop.",
+        "sdk/web/src/probe.ts waitForPageReady(): The fallback path (no PAGE element) listens to 'state-change' events on the EventStream and re-checks after each event rather than polling on a timer.",
+        "sdk/web/src/collector/event-stream.ts: EventStream provides waitFor(eventType, predicate, timeout) — a single promise that resolves on the first matching event, with a single timeout fallback.",
+        "SPEC.md design principle: 'Event-driven waits instead of fixed timeouts.'"
+      ],
+      "impact": "Tests run as fast as the application, not on worst-case timing. A page that loads in 200ms resolves waitForPageReady() in ~200ms, not after a 2-second sleep."
+    },
+    {
+      "name": "Smart Pre-Checks on Every Action",
+      "description": "Every action method validates element state through a 5-point check sequence before dispatching. Failures throw structured ProbeActionError objects with machine-readable error codes.",
+      "evidence": [
+        "sdk/web/src/actions/dispatcher.ts preCheck(): 'if (!element) throw { error: \"NOT_FOUND\", id }; if (!element.layout.visible) throw { error: \"NOT_VISIBLE\", id }; if (element.state.current === \"disabled\") throw { error: \"DISABLED\", id, reason }; if (element.state.current === \"loading\" || element.state.current === \"submitting\") throw { error: \"BUSY\", id, reason }'.  This is executed before every action method.",
+        "sdk/web/src/actions/dispatcher.ts select(): Adds a 5th check — 'if (element.data?.options && !element.data.options.includes(value)) throw { error: \"OPTION_NOT_FOUND\", id, available: element.data.options }'.",
+        "spec/probe-types.ts ProbeActionError: 'error: \"NOT_FOUND\" | \"NOT_VISIBLE\" | \"DISABLED\" | \"BUSY\" | \"OPTION_NOT_FOUND\"' — these are the canonical error codes in the spec.",
+        "DESIGN.md: Table listing all 5 checks with condition, error response, and reason fields."
+      ],
+      "impact": "Actions never silently fail. A click on a disabled button throws DISABLED with the validation error reason. A select with a typo throws OPTION_NOT_FOUND with the available list. Tests fail fast with actionable diagnostics."
+    },
+    {
+      "name": "Automatic Linkage Verification",
+      "description": "When an element has linkage declarations, actions automatically verify that all downstream targets responded correctly — without any extra test code.",
+      "evidence": [
+        "sdk/web/src/actions/dispatcher.ts actAndWait(): 'Auto-verify linkage if declared: if (element?.linkage?.targets.length) { linkageResults = await this.verifyLinkage(id, action); }' — this runs automatically after every actAndWait() call.",
+        "sdk/web/src/actions/dispatcher.ts verifyLinkage(): Waits for state-change events on each declared target (timeout 5000ms). Classifies results as directEffects vs chainedEffects based on path type. Tracks API calls for api-type paths.",
+        "DESIGN.md: 'After action, if element has linkage declarations, automatically check all target responses. Example: select(\"province\", \"广东\") → detects linkage [city-select, district-select] → waits for each response → returns pass/timeout per target'.",
+        "spec/probe-types.ts LinkageResult: Structured return type with trigger, action, directEffects[], chainedEffects[], apiCalls[] — designed for machine parsing."
+      ],
+      "impact": "A single actAndWait() call tests the full data flow chain: action → state transition → linked targets → API calls. Zero extra assertions needed."
+    },
+    {
+      "name": "Semantic Identity, Not Selector Fragility",
+      "description": "Elements are identified by stable semantic IDs (e.g. 'order-list', 'status-filter') rather than CSS selectors, XPath, or DOM structure. The probe ID is the test-facing contract.",
+      "evidence": [
+        "spec/probe-types.ts ProbeElement: 'id: string — Semantic identifier, e.g. \"order-list\".' This is field #1 in the canonical element model.",
+        "sdk/web/src/annotations/parser.ts: 'const id = element.getAttribute(\"data-probe-id\"); if (!id) { return null; }' — the ID is the one required attribute. All others are optional.",
+        "README.md: 'await page.probe.select(\"status-filter\", \"completed\")' — the test uses the semantic name 'status-filter', not '#filter-select' or '.filter-dropdown .ant-select-selector'.",
+        "SPEC.md: 'Identifiable: every key control has a unique semantic identifier. Queryable: tests can directly query control state without screenshot guessing.'"
+      ],
+      "impact": "UI refactors that rename CSS classes or restructure DOM hierarchy do not break tests. Tests break only if the semantic element ID is removed, which is a deliberate API change."
+    },
+    {
+      "name": "Progressive Disclosure",
+      "description": "The minimum viable annotation is a single data-probe-id attribute. Additional attributes (type, state, source, linkage) add capability progressively without requiring upfront investment in the full model.",
+      "evidence": [
+        "sdk/web/src/annotations/parser.ts: 'const id = element.getAttribute(\"data-probe-id\"); if (!id) { return null; }' — only id is required. All other attributes are optional and each falls through its own if-block.",
+        "spec/probe-types.ts ProbeElement: Only 4 fields are required (id, type, state, layout). The other 11 attributes are optional.",
+        "WebProbeConfig in sdk/web/src/probe.ts: 'autoScan = true, interceptNetwork = true, exposeGlobal = true' — sensible defaults mean zero configuration is needed to get started.",
+        "SPEC.md: 'Light annotation — developers only need to annotate key controls, one page 5-10 total, total cost < 30 minutes.'"
+      ],
+      "impact": "A developer can add data-probe-id to one element and immediately have query() returning data. They can then progressively add data-probe-source, data-probe-linkage, etc. as testing needs grow."
+    },
+    {
+      "name": "Platform Abstraction via Uniform Model",
+      "description": "All platforms map to the same ProbeElement model (15 attributes, 9 types) defined in spec/probe-types.ts. Test logic written against one platform's probe API is conceptually transferable to all others.",
+      "evidence": [
+        "spec/probe-types.ts: 'This file is the single source of truth for all probe types. All platform SDKs and integrations import from here.' TypeScript SDKs import directly; other languages port manually.",
+        ".allforai/product-map/source-summary.json architecture: 'Per-platform SDK adapters implement the same ProbeElement model in native idioms.' The dependency graph flows spec → sdk/* → integrations/* → examples/*.",
+        "DESIGN.md section 4: Architecture diagram shows 'ProbeAPI (unified query + operation protocol, JSON-based, cross-platform consistent)' as the middle layer between test tools and platform adapters.",
+        "sdk/web/src/probe.ts vs sdk/flutter/lib/src/collector/probe_binding.dart: Both implement query/queryAll/waitForState against the same ProbeElement model, despite completely different underlying mechanisms."
+      ],
+      "impact": "A test engineer writing against the probe API can transfer skills across platforms. A Flutter test using ProbeTester.query('order-list') is semantically identical to a Playwright test using ProbePage.query('order-list')."
+    },
+    {
+      "name": "Convention Over Configuration",
+      "description": "Sensible defaults, shorthand formats, and auto-detection reduce explicit configuration. The source shorthand 'GET /api/orders' is easier than full JSON; device auto-detection works without any setup.",
+      "evidence": [
+        "sdk/web/src/annotations/parser.ts parseSource(): 'Shorthand: \"GET /api/orders\" or just \"/api/orders\"' — accepts a space-separated method+URL string or just a URL (defaulting to GET), as an alternative to full JSON.",
+        "sdk/web/src/probe.ts getPlatformContext(): 'Auto-detect from browser environment: reads navigator.userAgent, window.innerWidth, window.devicePixelRatio' — works without any explicit setPlatformContext() call.",
+        "sdk/web/src/probe.ts constructor: 'autoScan = true, interceptNetwork = true, exposeGlobal = true' — all three major behaviors are opt-out, not opt-in.",
+        "sdk/web/src/collector/state-observer.ts waitForState(): 'timeout: number = 10000' — meaningful default so callers don't have to specify."
+      ],
+      "impact": "New annotations require only data-probe-id to function. Source bindings work with a simple URL string. Platform context is auto-detected. The API 'just works' for common cases."
+    },
+    {
+      "name": "Hierarchy-Aware Visibility",
+      "description": "Visibility is not just a per-element flag but an ancestor-chain property. isEffectivelyVisible() walks the full parent chain, so a child with visible=true inside a hidden container correctly reports as not visible.",
+      "evidence": [
+        "sdk/web/src/probe.ts isEffectivelyVisible(): 'const chain = this.getAncestorChain(id); return chain.every(el => el.layout.visible);' — checks every element from root to target.",
+        "sdk/windows-wpf/Collector/WpfProbeRegistry.cs: 'IsEffectivelyVisible walks visual parent chain' — same pattern in Windows.",
+        "sdk/ios/Sources/UITestProbe/Collector/ProbeRegistry.swift: 'walkParentChain' — same pattern in iOS.",
+        "DESIGN.md: '子控件 visible=true 但父容器 hidden → isEffectivelyVisible 返回 false (child visible=true but parent container hidden → isEffectivelyVisible returns false)' — explicitly documented as a design decision."
+      ],
+      "impact": "Visibility-toggle linkage effects (dropdown showing a form field that is inside a hidden panel) are correctly verified without false positives."
+    }
+  ]
+}

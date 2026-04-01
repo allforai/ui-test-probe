@@ -74,9 +74,9 @@ class ActionDispatcher {
 
   /// Fill a text input probe element with [text].
   ///
-  /// Pre-checks: element must be of type [ProbeType.input], visible, and enabled.
+  /// Pre-checks: element must be of type [ProbeType.form], visible, and enabled.
   Future<ActionResult> fill(String probeId, String text) async {
-    final failure = _preCheck(probeId, requiredType: ProbeType.input);
+    final failure = _preCheck(probeId, requiredType: ProbeType.form);
     if (failure != null) return failure;
 
     binding.scan();

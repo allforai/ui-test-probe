@@ -1,0 +1,659 @@
+{
+  "builtTestProducts" : [
+    {
+      "binaryPath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.xctest/Contents/MacOS/UITestProbePackageTests",
+      "packagePath" : "/Users/aa/workspace/ui-test-probe/sdk/ios",
+      "productName" : "UITestProbePackageTests"
+    }
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.UITestProbe-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/sources",
+      "importPath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Actions/ActionDispatcher.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Annotations/ProbeModifiers.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Collector/ProbeRegistry.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Models/ProbeTypes.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "UITestProbe",
+      "moduleOutputPath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules/UITestProbe.swiftmodule",
+      "objects" : [
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ActionDispatcher.swift.o",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeModifiers.swift.o",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeRegistry.swift.o",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeTypes.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j18",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/include/UITestProbe-Swift.h",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "ios"
+      ],
+      "outputFileMapPath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ActionDispatcher.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeModifiers.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeRegistry.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeTypes.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules/UITestProbe.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Actions/ActionDispatcher.swift",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Annotations/ProbeModifiers.swift",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Collector/ProbeRegistry.swift",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Models/ProbeTypes.swift"
+      ],
+      "tempsPath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.UITestProbePackageTests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.build/sources",
+      "importPath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.derived/runner.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules/UITestProbeTests.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "UITestProbePackageTests",
+      "moduleOutputPath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules/UITestProbePackageTests.swiftmodule",
+      "objects" : [
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.build/runner.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j18",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.build/include/UITestProbePackageTests-Swift.h",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "ios"
+      ],
+      "outputFileMapPath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules/UITestProbePackageTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.derived/runner.swift"
+      ],
+      "tempsPath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.UITestProbeTests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/sources",
+      "importPath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/Tests/UITestProbeTests/UITestProbeTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules/UITestProbe.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "UITestProbeTests",
+      "moduleOutputPath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules/UITestProbeTests.swiftmodule",
+      "objects" : [
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/UITestProbeTests.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j18",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "ios"
+      ],
+      "outputFileMapPath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/UITestProbeTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules/UITestProbeTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/aa/workspace/ui-test-probe/sdk/ios/Tests/UITestProbeTests/UITestProbeTests.swift"
+      ],
+      "tempsPath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "UITestProbe" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "UITestProbe",
+      "-package-name",
+      "ios",
+      "-c",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Actions/ActionDispatcher.swift",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Annotations/ProbeModifiers.swift",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Collector/ProbeRegistry.swift",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Models/ProbeTypes.swift",
+      "-I",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j18",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/include/UITestProbe-Swift.h",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "ios",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "UITestProbePackageTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "UITestProbePackageTests",
+      "-package-name",
+      "ios",
+      "-c",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.derived/runner.swift",
+      "-I",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j18",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.build/include/UITestProbePackageTests-Swift.h",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "ios",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "UITestProbeTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "UITestProbeTests",
+      "-package-name",
+      "ios",
+      "-c",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/Tests/UITestProbeTests/UITestProbeTests.swift",
+      "-I",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j18",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "ios",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "UITestProbe" : [
+
+    ],
+    "UITestProbePackageTests" : [
+      "UITestProbeTests",
+      "UITestProbe"
+    ],
+    "UITestProbeTests" : [
+      "UITestProbe"
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+    "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.derived/runner.swift" : {
+      "inputs" : [
+
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.derived/runner.swift"
+        }
+      ]
+    }
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Actions/ActionDispatcher.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Annotations/ProbeModifiers.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Collector/ProbeRegistry.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/Sources/UITestProbe/Models/ProbeTypes.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/sources"
+    },
+    "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.derived/runner.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.build/sources"
+    },
+    "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ActionDispatcher.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeModifiers.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeRegistry.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbe.build/ProbeTypes.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/UITestProbeTests.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbePackageTests.product/Objects.LinkFileList"
+    },
+    "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/aa/workspace/ui-test-probe/sdk/ios/Tests/UITestProbeTests/UITestProbeTests.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/sources"
+    },
+    "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

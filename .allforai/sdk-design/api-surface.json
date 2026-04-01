@@ -1,0 +1,564 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "source_files_read": [
+    "spec/probe-types.ts",
+    "sdk/web/src/probe.ts",
+    "sdk/web/src/actions/dispatcher.ts",
+    "sdk/web/src/annotations/parser.ts",
+    "sdk/web/src/collector/state-observer.ts",
+    "integrations/playwright/src/probe-page.ts",
+    ".allforai/product-map/source-summary.json",
+    ".allforai/product-map/file-catalog.json"
+  ],
+  "primitives": [
+    {
+      "id": "P1",
+      "name": "Element Registry",
+      "description": "Register and query UI elements by semantic ID. The foundation primitive that all others depend on. Scans the UI tree (DOM, widget tree, view hierarchy) for annotated elements and maintains a live registry keyed by probe ID.",
+      "methods": [
+        {
+          "name": "query",
+          "signature": "(id: string) => ProbeElement | null",
+          "description": "Look up a single element by its semantic probe ID. Returns the full 15-attribute ProbeElement or null if not found.",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true },
+          "implementation_notes": "Web: Map<string, ProbeElement> lookup in ElementRegistry. Flutter: ProbeBinding.query(). iOS: ProbeRegistry singleton scan. Android: SemanticsNode tree walk. Windows: IProbeRegistry.Query(). RN: self-registration registry."
+        },
+        {
+          "name": "queryAll",
+          "signature": "(type?: ProbeType) => ProbeElement[]",
+          "description": "Return all registered elements, optionally filtered by ProbeType (e.g. only 'data-container' or 'action' elements).",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "queryPage",
+          "signature": "() => PageQueryResult",
+          "description": "Return a summary of the current page: its ID, state, all elements, and which elements are still loading/submitting (unready). If no PAGE element found, derives state from unready elements count.",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true },
+          "return_type": "{ id: string; state: string; elements: ProbeElement[]; unreadyElements: string[] }"
+        }
+      ]
+    },
+    {
+      "id": "P2",
+      "name": "State Exposure",
+      "description": "Expose real-time element state (loaded/error/disabled/submitting/etc.) as structured data instead of requiring screenshot interpretation. State includes current value, previous value, timestamp, open/closed for modals, and validation errors.",
+      "methods": [
+        {
+          "name": "getState",
+          "signature": "(id: string) => ProbeElement['state']",
+          "description": "Get the current state object for a specific element. Throws Error (not ProbeActionError) if element not found.",
+          "category": "read",
+          "implementation_notes": "Web: sdk/web/src/probe.ts — throws Error('Element not found: id') if registry miss",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "getStates",
+          "signature": "(ids: string[]) => Record<string, ProbeElement['state']>",
+          "description": "Batch query: get state objects for multiple elements at once. Silently skips IDs not found.",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        }
+      ]
+    },
+    {
+      "id": "P3",
+      "name": "Event Stream",
+      "description": "Subscribe to state changes and events using an event-driven model instead of polling or fixed timeouts. Provides promise-based waitFor methods for test synchronization and callback-based subscriptions for continuous monitoring.",
+      "methods": [
+        {
+          "name": "waitForState",
+          "signature": "(id: string, state: string, timeout?: number) => Promise<void>",
+          "description": "Wait until a specific element reaches the desired state string. Resolves immediately if already in that state. Rejects on timeout (default 10s). Implementation: MutationObserver on data-probe-state attribute (web), frame callback diff (Flutter), polling loop (iOS/Android).",
+          "category": "wait",
+          "default_timeout_ms": 10000,
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "waitForPageReady",
+          "signature": "(timeout?: number) => Promise<void>",
+          "description": "Wait until the page is ready: either the PAGE element reaches 'loaded' state, or all elements leave loading/submitting states. Default timeout 30s. Web implementation is fully event-driven (re-polls on state-change events, no setTimeout polling).",
+          "category": "wait",
+          "default_timeout_ms": 30000,
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "onStateChange",
+          "signature": "(id: string, callback: (oldState: string, newState: string) => void) => () => void",
+          "description": "Register a callback that fires whenever the specified element's state changes. Returns an unsubscribe function (no cleanup leaks).",
+          "category": "subscribe",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "onEvent",
+          "signature": "(id: string, event: string, callback: (detail: unknown) => void) => () => void",
+          "description": "Subscribe to arbitrary probe events scoped to a specific element. Event key format: '{event}:{id}'. Returns an unsubscribe function.",
+          "category": "subscribe",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        }
+      ]
+    },
+    {
+      "id": "P4",
+      "name": "Source Binding",
+      "description": "Link UI elements to their API data sources. Intercepts network requests (fetch/XHR/HttpClient/HttpOverrides) and correlates them with elements annotated with data-probe-source. Tracks URL, method, HTTP status, response time, and payload.",
+      "methods": [
+        {
+          "name": "getSource",
+          "signature": "(id: string) => ProbeElement['source'] | null",
+          "description": "Get the source binding for an element: URL, method, status code, response time. Returns null if no source tracked.",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": true, "ios": false, "android": false, "windows": false, "react_native": true }
+        },
+        {
+          "name": "getNetworkLog",
+          "signature": "() => NetworkLogEntry[]",
+          "description": "Return the full network log since probe installation. Each entry includes URL, method, status, timestamp, and matched elementId if correlated.",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": true, "ios": false, "android": false, "windows": false, "react_native": true }
+        },
+        {
+          "name": "waitForSource",
+          "signature": "(id: string, timeout?: number) => Promise<ProbeElement['source']>",
+          "description": "Wait until a specific element's source binding is populated (the corresponding network request completes). Web: event-driven via source-update events. RN: waitForRequest() with URL pattern matching.",
+          "category": "wait",
+          "default_timeout_ms": 10000,
+          "implemented_in": { "web": true, "flutter": true, "ios": false, "android": false, "windows": false, "react_native": true }
+        }
+      ]
+    },
+    {
+      "id": "P5",
+      "name": "Layout Metrics",
+      "description": "Provide position, size, visibility, scroll position, and render timing metrics from the rendering engine. Uses platform-native APIs (getBoundingClientRect + IntersectionObserver web, RenderBox flutter, UIView.frame iOS, SemanticsNode.boundsInWindow Android, UIElement.RenderSize Windows).",
+      "methods": [
+        {
+          "name": "getLayout",
+          "signature": "(id: string) => ProbeElement['layout']",
+          "description": "Get current layout metrics: x, y, width, height, visible flag, render time, scroll offsets.",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "getOverlaps",
+          "signature": "() => Array<{ a: string; b: string; overlapArea: number }>",
+          "description": "Detect all pairs of overlapping probe elements in the current viewport by computing bounding rect intersection areas. Web: O(n²) comparison in LayoutTracker.",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": false, "ios": false, "android": false, "windows": false, "react_native": false }
+        },
+        {
+          "name": "getScrollPosition",
+          "signature": "(id: string) => { scrollTop: number; scrollLeft: number }",
+          "description": "Get the scroll position of a scrollable probe element in pixels.",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        }
+      ]
+    },
+    {
+      "id": "P6",
+      "name": "Action Dispatch",
+      "description": "Perform semantic UI operations using probe IDs with smart 5-point pre-checks (exists, visible, enabled, not busy, option exists for select). Every action dispatches real platform events. After each action, automatically verifies linkage targets if declared on the element.",
+      "pre_check_sequence": [
+        "1. Element exists in registry → NOT_FOUND if missing",
+        "2. layout.visible === true → NOT_VISIBLE if hidden",
+        "3. state.current !== 'disabled' → DISABLED if disabled",
+        "4. state.current not in ['loading', 'submitting'] → BUSY if busy",
+        "5. For select only: value in data.options → OPTION_NOT_FOUND if missing"
+      ],
+      "methods": [
+        {
+          "name": "click",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Click an element. Web: element.click(). Flutter: WidgetTester tap. iOS: UIControl.sendActions / accessibilityActivate. Android: performClick via ActionPerformer.",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND", "NOT_VISIBLE", "DISABLED", "BUSY"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "doubleClick",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Double-click an element. Web: dispatches dblclick MouseEvent with bubbles:true.",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND", "NOT_VISIBLE", "DISABLED", "BUSY"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "rightClick",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Right-click an element. Web: dispatches contextmenu MouseEvent with button:2.",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND", "NOT_VISIBLE", "DISABLED", "BUSY"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "hover",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Hover over element. Web: dispatches mouseenter then mouseover (both with bubbles).",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND", "NOT_VISIBLE", "DISABLED", "BUSY"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "focus",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Move keyboard focus. Web: element.focus().",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND", "NOT_VISIBLE", "DISABLED", "BUSY"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "type",
+          "signature": "(id: string, text: string) => Promise<void>",
+          "description": "Type text character-by-character. Web: dispatches keydown/keypress/input/keyup per char. For automated form filling; use fill() for atomic replacement.",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND", "NOT_VISIBLE", "DISABLED", "BUSY"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "fill",
+          "signature": "(id: string, value: string) => Promise<void>",
+          "description": "Set input value atomically. Web: uses native HTMLInputElement.prototype value setter to work with React controlled components, then dispatches input+change events.",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND", "NOT_VISIBLE", "DISABLED", "BUSY"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "clear",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Clear an input element. Implemented as fill(id, '').",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND", "NOT_VISIBLE", "DISABLED", "BUSY"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "select",
+          "signature": "(id: string, value: string) => Promise<void>",
+          "description": "Select an option from a selector element. Validates option exists against data.options before dispatching.",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND", "NOT_VISIBLE", "DISABLED", "BUSY", "OPTION_NOT_FOUND"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "check",
+          "signature": "(id: string, checked: boolean) => Promise<void>",
+          "description": "Set checked state of a checkbox or radio. Web: sets element.checked then dispatches change+input.",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND", "NOT_VISIBLE", "DISABLED", "BUSY"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "scrollTo",
+          "signature": "(id: string, position: { top?: number; left?: number }) => Promise<void>",
+          "description": "Scroll element to absolute position. Web: element.scrollTo({ behavior: 'instant' }).",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND", "NOT_VISIBLE", "DISABLED", "BUSY"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "scrollToBottom",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Scroll element to maximum scrollTop (element.scrollTop = element.scrollHeight).",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND", "NOT_VISIBLE", "DISABLED", "BUSY"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "scrollIntoView",
+          "signature": "(id: string) => Promise<void>",
+          "description": "Scroll viewport to center element. Web: element.scrollIntoView({ behavior: 'smooth', block: 'center' }).",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND", "NOT_VISIBLE", "DISABLED", "BUSY"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "drag",
+          "signature": "(sourceId: string, targetId: string) => Promise<void>",
+          "description": "Drag-and-drop. Web: dispatches dragstart → dragover → drop → dragend with clientX/Y from getBoundingClientRect. Pre-checks both source AND target elements.",
+          "category": "action",
+          "pre_checks": ["NOT_FOUND (both)", "NOT_VISIBLE (both)", "DISABLED", "BUSY"],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "pressShortcut",
+          "signature": "(key: string) => Promise<void>",
+          "description": "Press a keyboard shortcut string (e.g. 'Ctrl+S', 'Meta+Shift+Z'). Web: dispatches to document. Parses ctrl/shift/alt/meta from '+' delimited parts.",
+          "category": "action",
+          "pre_checks": [],
+          "note": "No element pre-checks — dispatched to document, not a specific element",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "navigate",
+          "signature": "(route: string) => Promise<void>",
+          "description": "Navigate to a route. Web: history.pushState({}, '', route) then dispatchEvent(new PopStateEvent('popstate')).",
+          "category": "action",
+          "pre_checks": [],
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        }
+      ]
+    }
+  ],
+  "auxiliary": [
+    {
+      "id": "AUX1",
+      "name": "Platform Context",
+      "description": "Manage platform, device, and viewport context. Provides 11 built-in device presets and runAcrossDevices() for matrix testing across multiple device profiles with a single test function.",
+      "methods": [
+        {
+          "name": "setPlatformContext",
+          "signature": "(context: PlatformContext) => Promise<void>",
+          "description": "Set the full platform context (platform, device profile, viewport size, input mode).",
+          "category": "write",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "getPlatformContext",
+          "signature": "() => PlatformContext",
+          "description": "Get the current platform context. Web: auto-detects from navigator.userAgent + window.innerWidth if not explicitly set.",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "setDevice",
+          "signature": "(preset: ViewportPreset | string) => Promise<void>",
+          "description": "Apply a named device preset from spec/devices.json (e.g. 'iphone-15-pro', 'pixel-8'). Throws if preset unknown. Available: iphone-se, iphone-15-pro, ipad-air, ipad-pro-12, pixel-8, galaxy-s24, galaxy-tab-s9, galaxy-fold, macbook-air-13, desktop-1080p, desktop-1440p.",
+          "category": "write",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "runAcrossDevices",
+          "signature": "(devices: Array<ViewportPreset | string>, test: (probe: UITestProbe) => Promise<void>) => Promise<Record<string, TestResult>>",
+          "description": "Run the same test function across multiple device profiles sequentially. Catches errors per device. Returns { deviceName: { device, passed, duration, error? } }.",
+          "category": "composite",
+          "implemented_in": { "web": true, "flutter": true, "ios": false, "android": true, "windows": false, "react_native": true }
+        }
+      ]
+    },
+    {
+      "id": "AUX2",
+      "name": "Hierarchy",
+      "description": "Navigate the parent-children tree of probe elements. Enables ancestor chain walking for effective visibility checks — child visible=true but parent hidden means effectively invisible.",
+      "methods": [
+        {
+          "name": "queryChildren",
+          "signature": "(id: string) => ProbeElement[]",
+          "description": "Get direct child elements by reading element.children[] probe IDs and resolving from registry.",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "queryDescendants",
+          "signature": "(id: string) => ProbeElement[]",
+          "description": "Get all descendants via DFS. Web: recursive collect() calling queryChildren().",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "queryParent",
+          "signature": "(id: string) => ProbeElement | null",
+          "description": "Get the parent element by reading element.parent probe ID and resolving from registry.",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "getAncestorChain",
+          "signature": "(id: string) => ProbeElement[]",
+          "description": "Get the full ancestor chain from root to the specified element (inclusive). Array ordered root-first. Web: walks parent links until null, unshifts each to front.",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": false, "ios": false, "android": false, "windows": false, "react_native": false }
+        },
+        {
+          "name": "isEffectivelyVisible",
+          "signature": "(id: string) => boolean",
+          "description": "Returns false if any ancestor has layout.visible === false. Web: getAncestorChain().every(el => el.layout.visible). iOS: walks UIView parent chain. Windows WPF: walks VisualTreeHelper parent chain.",
+          "category": "read",
+          "implemented_in": { "web": true, "flutter": false, "ios": true, "android": true, "windows": true, "react_native": true }
+        }
+      ]
+    },
+    {
+      "id": "AUX3",
+      "name": "Composite Operations",
+      "description": "Higher-level operations that compose multiple primitives: snapshot/diff for regression testing, verifyLinkage for end-to-end data flow verification, and actAndWait for action+wait+verify in a single call.",
+      "methods": [
+        {
+          "name": "snapshot",
+          "signature": "() => ProbeSnapshot",
+          "description": "Capture a deep clone of all registered elements and platform context. Web: uses structuredClone with JSON.parse/stringify fallback.",
+          "category": "read",
+          "return_type": "{ timestamp: number; elements: Record<string, ProbeElement>; platformContext: PlatformContext }",
+          "implemented_in": { "web": true, "flutter": false, "ios": false, "android": false, "windows": false, "react_native": false }
+        },
+        {
+          "name": "diff",
+          "signature": "(a: ProbeSnapshot, b: ProbeSnapshot) => SnapshotDiff[]",
+          "description": "Compare two snapshots and return field-level diffs. Compares state, data, source, layout, linkage fields via JSON.stringify. Also detects added/removed elements via _existence field.",
+          "category": "read",
+          "return_type": "Array<{ elementId: string; field: string; before: unknown; after: unknown }>",
+          "implemented_in": { "web": true, "flutter": false, "ios": false, "android": false, "windows": false, "react_native": false }
+        },
+        {
+          "name": "verifyLinkage",
+          "signature": "(triggerId: string, action: string) => Promise<LinkageResult>",
+          "description": "Verify all declared linkage targets respond after an action. Web: waits up to 5000ms per target via state-change events, categorizes direct vs chained effects, tracks API calls for api-type paths.",
+          "category": "composite",
+          "default_timeout_ms": 5000,
+          "return_type": "{ trigger, action, directEffects: [{target, effect, result, duration}], chainedEffects: [{target, effect, through, result, duration}], apiCalls: [{url, method, status, responseTime}] }",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        },
+        {
+          "name": "actAndWait",
+          "signature": "(id: string, action: string, waitFor: { target?: string; state?: string; timeout?: number }) => Promise<ActAndWaitResult>",
+          "description": "Dispatch action + wait for target state + auto-verify linkage in one call. Action string format: 'click', 'fill:value', 'select:option'. Returns actionDuration, waitDuration, targetState, linkageResults.",
+          "category": "composite",
+          "default_timeout_ms": 10000,
+          "action_string_format": "'{methodName}' or '{methodName}:{arg}' e.g. 'click', 'fill:hello', 'select:completed'",
+          "implemented_in": { "web": true, "flutter": true, "ios": true, "android": true, "windows": true, "react_native": true }
+        }
+      ]
+    }
+  ],
+  "types_catalog": {
+    "probe_types": {
+      "count": 9,
+      "source": "spec/probe-types.ts — ProbeType enum",
+      "values": [
+        { "key": "DATA_CONTAINER", "value": "data-container", "description": "Table / DataGrid / List / Tree. Type-specific data extensions: sort, filter, selectedRows." },
+        { "key": "SELECTOR", "value": "selector", "description": "ComboBox / Select / Dropdown." },
+        { "key": "ACTION", "value": "action", "description": "Button / Link / MenuItem." },
+        { "key": "DISPLAY", "value": "display", "description": "Label / Badge / Counter / Chip." },
+        { "key": "MEDIA", "value": "media", "description": "Image / Video / Audio / Canvas. Type-specific data extensions: currentTime, duration, readyState, paused, networkState." },
+        { "key": "FORM", "value": "form", "description": "Input / TextArea / Checkbox / Radio." },
+        { "key": "PAGE", "value": "page", "description": "Page-level container. State 'loaded' is the signal for waitForPageReady()." },
+        { "key": "MODAL", "value": "modal", "description": "Dialog / Drawer / Popover / Tooltip. state.isOpen tracks open state." },
+        { "key": "NAVIGATION", "value": "navigation", "description": "Tabs / Breadcrumb / Sidebar / Paginator." }
+      ],
+      "platform_divergence": "Flutter, iOS, Android SDKs use a simplified 7-type enum (control/display/input/navigation/container/media/feedback) — known divergence from the spec. Windows C# (windows-core) matches all 9 spec types."
+    },
+    "element_attributes": {
+      "count": 15,
+      "source": "spec/probe-types.ts — ProbeElement interface",
+      "required": ["id", "type", "state", "layout"],
+      "optional": ["accessibility", "data", "source", "linkage", "shortcuts", "animation", "locale", "theme", "eventBindings", "session", "parent", "children"],
+      "attributes": [
+        { "name": "id", "type": "string", "required": true, "description": "Semantic identifier (e.g. 'order-list'). Unique within the probe registry." },
+        { "name": "type", "type": "ProbeType", "required": true, "description": "Widget category (9 values). Determines which data sub-fields are relevant." },
+        { "name": "accessibility", "type": "{ role?, label?, tabIndex? }", "required": false, "description": "From ARIA attributes (web) or platform accessibility APIs." },
+        { "name": "state", "type": "{ current: string, previous?: string, timestamp: number, isOpen?: boolean, validationErrors?: Array<{field,message}> }", "required": true, "description": "Real-time element state. Common values: loading, loaded, error, empty, disabled, submitting." },
+        { "name": "data", "type": "{ value?, options?, rows?, columns?, sort?, filter?, selectedRows?, currentTime?, duration?, readyState?, paused?, networkState? }", "required": false, "description": "Type-specific payload. Empty fields omitted." },
+        { "name": "source", "type": "{ url: string, method: string, status?: number, responseTime?: number, payload?: unknown }", "required": false, "description": "API data source binding. Populated by SourceTracker after network request." },
+        { "name": "linkage", "type": "{ targets: LinkageTarget[] }", "required": false, "description": "Declared inter-element linkages for automatic verification." },
+        { "name": "layout", "type": "{ x, y, width, height, visible: boolean, renderTime?, scrollTop?, scrollLeft? }", "required": true, "description": "Geometric and visibility metrics from the rendering engine." },
+        { "name": "shortcuts", "type": "Array<{ key: string, action: string, platform?: string }>", "required": false },
+        { "name": "animation", "type": "{ playing: boolean, name?, duration?, progress? }", "required": false },
+        { "name": "locale", "type": "{ language?, direction?: 'ltr'|'rtl', isRTL?: boolean }", "required": false },
+        { "name": "theme", "type": "{ mode?: 'light'|'dark'|'high-contrast', colorScheme?: string }", "required": false },
+        { "name": "eventBindings", "type": "string[]", "required": false, "description": "DOM event types bound to element (e.g. ['click','change'])." },
+        { "name": "session", "type": "{ isDirty?: boolean, hasUnsavedChanges?: boolean }", "required": false },
+        { "name": "parent", "type": "string", "required": false, "description": "Parent element probe ID." },
+        { "name": "children", "type": "string[]", "required": false, "description": "Child element probe IDs." }
+      ]
+    },
+    "linkage_path_types": {
+      "count": 6,
+      "source": "spec/probe-types.ts — LinkagePath discriminated union",
+      "values": [
+        { "type": "direct", "extra_fields": "none", "description": "Pure frontend state propagation. No network call. Test only validates state changes." },
+        { "type": "api", "extra_fields": "url: string, method?: string", "description": "Through an API call. Test validates API call + response + data mapping." },
+        { "type": "computed", "extra_fields": "expression: string", "description": "Derived calculation (e.g. 'quantity * unitPrice'). Test validates formula correctness." },
+        { "type": "store", "extra_fields": "storeName: string, action?: string", "description": "Through state management layer (Redux/Pinia/Bloc). Test validates store action dispatch." },
+        { "type": "navigation", "extra_fields": "route: string", "description": "Through a route change. Test validates URL change + target page loaded." },
+        { "type": "chain", "extra_fields": "through: string", "description": "Through an intermediate element (A → B → C). Produces chainedEffects in LinkageResult." }
+      ]
+    },
+    "linkage_effects": {
+      "count": 7,
+      "source": "spec/probe-types.ts — LinkageEffect enum",
+      "values": [
+        { "key": "OPTIONS_UPDATE", "value": "options_update", "description": "Downstream selector options change." },
+        { "key": "DATA_RELOAD", "value": "data_reload", "description": "Data container refreshes from source." },
+        { "key": "VISIBILITY_TOGGLE", "value": "visibility_toggle", "description": "Element appears or disappears." },
+        { "key": "ENABLED_TOGGLE", "value": "enabled_toggle", "description": "Element becomes enabled or disabled." },
+        { "key": "VALUE_UPDATE", "value": "value_update", "description": "Element value changes." },
+        { "key": "RESET", "value": "reset", "description": "Element resets to default state." },
+        { "key": "NAVIGATE", "value": "navigate", "description": "Route/page navigation occurs." }
+      ]
+    }
+  },
+  "annotation_formats": {
+    "web": {
+      "prefix": "data-probe-",
+      "minimum_required": "data-probe-id",
+      "source_shorthand_example": "data-probe-source=\"GET /api/orders\" (or just \"/api/orders\" for GET default)",
+      "linkage_format": "JSON array: [{\"id\":\"order-table\",\"effect\":\"data_reload\",\"path\":{\"type\":\"api\",\"url\":\"/api/orders\"}}]",
+      "source": "sdk/web/src/annotations/parser.ts — AnnotationParser.parse()"
+    },
+    "flutter": "ProbeWidget(id: 'order-list', type: ProbeType.dataContainer, child: DataTable(...))",
+    "ios": ".probeId('order-list').probeType(.dataContainer).probeState('loaded') SwiftUI modifier chain",
+    "android": "Modifier.probeId('order-list').probeType(ProbeType.DATA_CONTAINER) in Compose",
+    "windows_wpf": "<ListView probe:Probe.Id=\"order-list\" probe:Probe.Type=\"DataContainer\" />",
+    "windows_winforms": "probeProvider.SetProbeId(listView, \"order-list\") via IExtenderProvider",
+    "windows_winui_maui": "<ListView probe:Probe.Id=\"order-list\" probe:Probe.Type=\"DataContainer\" />",
+    "react_native": "const props = useProbe({ id: 'order-list', type: 'data-container' }) then <FlatList {...props} />"
+  },
+  "platform_coverage": {
+    "web": {
+      "state": "complete — reference implementation",
+      "language": "TypeScript",
+      "sdk_package": "@allforai/ui-test-probe-web",
+      "integration_package": "@allforai/ui-test-probe-playwright",
+      "annotation_mechanism": "data-probe-* HTML attributes",
+      "injection_mechanism": "page.addInitScript() with pre-built IIFE bundle (dist/probe-bundle.js)",
+      "global_api": "window.__probe__",
+      "known_gaps": []
+    },
+    "flutter": {
+      "state": "complete",
+      "language": "Dart",
+      "sdk_package": "ui_test_probe_flutter",
+      "integration_package": "ui_test_probe_flutter_test",
+      "annotation_mechanism": "ProbeWidget wrapper with Semantics metadata encoding",
+      "injection_mechanism": "WidgetTester extension (ProbeTester)",
+      "known_gaps": ["7-type ProbeType enum instead of 9-type spec", "snapshot/diff not implemented", "getOverlaps not implemented"]
+    },
+    "ios": {
+      "state": "complete",
+      "language": "Swift",
+      "sdk_package": "UITestProbe (SPM)",
+      "integration_package": "UITestProbeXCTest (SPM)",
+      "annotation_mechanism": ".probeId() / .probeType() / .probeState() SwiftUI modifiers via accessibility properties",
+      "injection_mechanism": "XCUITest process bridge (ProbeXCTest wrapping XCUIApplication)",
+      "known_gaps": ["7-type ProbeType enum", "snapshot/diff not implemented", "source-binding not implemented (no HttpOverrides equivalent)"]
+    },
+    "android": {
+      "state": "complete",
+      "language": "Kotlin",
+      "sdk_package": "ui-test-probe-android (Maven Central)",
+      "integration_package": "ProbeTestRule",
+      "annotation_mechanism": "Custom SemanticsPropertyKeys + Modifier extensions",
+      "injection_mechanism": "ComposeTestRule extension wiring rootNodeProvider to semantics tree",
+      "known_gaps": ["7-type ProbeType enum", "snapshot/diff not implemented", "source-binding not implemented"]
+    },
+    "windows": {
+      "state": "complete — 4 packages",
+      "language": "C#",
+      "sdk_packages": ["UITestProbe.Core (NuGet)", "UITestProbe.Wpf", "UITestProbe.WinForms", "UITestProbe.WinUI"],
+      "integration_packages": ["WpfProbeDriver", "WinFormProbeDriver", "ProbeDriver (WinUI)"],
+      "annotation_mechanism": "DependencyProperty (WPF/WinUI), BindableProperty (MAUI), IExtenderProvider (WinForms)",
+      "injection_mechanism": "UI Automation API / in-process injection",
+      "known_gaps": ["runAcrossDevices not implemented", ".NET not available on author's machine for testing"]
+    },
+    "react_native": {
+      "state": "complete",
+      "language": "TypeScript",
+      "sdk_package": "@allforai/ui-test-probe-rn",
+      "integration_package": "ProbeDevice (Detox)",
+      "annotation_mechanism": "useProbe() hook / withProbe() HOC — serializes into testID + accessibilityHint JSON",
+      "injection_mechanism": "Detox bridge / executeScript for RN probe bridge",
+      "known_gaps": ["snapshot/diff not implemented"]
+    }
+  }
+}

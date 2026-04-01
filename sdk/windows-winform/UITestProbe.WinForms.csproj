@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>UITestProbe.WinForms</RootNamespace>
+    <PackageId>AllForAI.UITestProbe.WinForms</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>AllForAI</Authors>
+    <Description>UI Test Probe SDK for Windows Forms — observable UI testing with ExtenderProvider annotations</Description>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../windows-core/UITestProbe.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,195 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "source_files_read": [
+    "README.md",
+    "SPEC.md",
+    "DESIGN.md"
+  ],
+  "framework": "Diátaxis (https://diataxis.fr) — 4 documentation types: Tutorial, How-to, Reference, Explanation",
+  "diataxis_types": {
+    "tutorial": "Learning-oriented. Guides a newcomer through a complete working example from zero. Goal: the reader succeeds at a concrete task.",
+    "how_to": "Task-oriented. Step-by-step guide for a specific goal the reader already has. Goal: accomplish X.",
+    "reference": "Information-oriented. Authoritative description of the system. Goal: accurate, complete lookup.",
+    "explanation": "Understanding-oriented. Discusses why decisions were made, trade-offs, background. Goal: insight."
+  },
+
+  "documents": [
+    {
+      "file": "README.md",
+      "line_count": 129,
+      "language": "English",
+      "primary_diataxis_type": "explanation",
+      "secondary_diataxis_type": "reference (partial)",
+      "quality_rating": 3,
+      "quality_scale": "1=unusable, 5=excellent",
+      "strengths": [
+        "Clear problem statement: 'AI-driven testing tools currently rely on screenshots + visual guessing — slow, fragile, and shallow'",
+        "Concise 6-primitive table explains the solution space at a glance",
+        "Code examples show the most important usage patterns (query, waitForPageReady, actAndWait, runAcrossDevices)",
+        "7 testing pain points table creates immediate resonance with target audience",
+        "Linkage model (6 path types) is well-explained with a table",
+        "Platform coverage table gives quick status overview"
+      ],
+      "weaknesses": [
+        "README code examples use 'page.probe.query()' shorthand that does not match the actual Playwright integration API (ProbePage wrapper). The real usage requires 'const probe = new ProbePage(page); const el = await probe.query(\"order-list\")'.",
+        "No tutorial: there is no 'get started in 5 minutes' section with actual runnable steps",
+        "No installation instructions: no npm install command shown",
+        "Platform coverage table uses vague 'Phase X' labels rather than 'available now' / 'in progress'",
+        "Element model description is a flat list of 15 attribute names with no examples of what each looks like in practice",
+        "Linkage model explanation has no data-probe-linkage HTML example showing the JSON format"
+      ],
+      "diataxis_gaps": {
+        "tutorial": "MISSING — No getting-started tutorial. A new user cannot get from 'npm install' to a working test.",
+        "how_to": "MISSING — No task-specific guides (e.g. 'How to test a data table', 'How to verify a filter-driven reload', 'How to add annotations to an existing React app').",
+        "reference": "PARTIAL — Shows some API methods in code examples but is not a complete method reference. No parameter types, return types, or error conditions documented.",
+        "explanation": "GOOD — Strong explanation of why the framework exists, the two-layer architecture, and the design rationale."
+      },
+      "recommendations": [
+        "Add a 'Quick Start' section with actual runnable steps: npm install → injectProbe setup → first test",
+        "Fix code examples to use the actual ProbePage API, not the shorthand",
+        "Add a 'How to annotate a form' and 'How to verify a filter+table linkage' guide",
+        "Expand element model section with a minimal working ProbeElement JSON example"
+      ]
+    },
+    {
+      "file": "SPEC.md",
+      "line_count": 179,
+      "language": "Chinese (Mandarin)",
+      "primary_diataxis_type": "explanation",
+      "secondary_diataxis_type": "reference (partial)",
+      "quality_rating": 3,
+      "quality_scale": "1=unusable, 5=excellent",
+      "strengths": [
+        "Strong problem statement with quantified pain points (efficiency, stability, depth)",
+        "Clean mapping of 7 pain areas to 6 primitives combinations — shows architectural reasoning",
+        "Design principles table is explicit and valuable: zero-business-logic coupling, light annotation, production-zero impact, cross-platform, LLM-friendly",
+        "Annotation cost model (table with page complexity vs time) is a compelling adoption argument",
+        "Platform matrix with annotation + injection mechanisms is useful reference",
+        "Measurable success metrics table (accuracy, timing comparisons)"
+      ],
+      "weaknesses": [
+        "Written entirely in Chinese — not accessible to English-speaking contributors and users without translation",
+        "Element model shown as condensed TypeScript (one-liners) rather than the full annotated definition in spec/probe-types.ts",
+        "No code examples — only type signatures and architecture descriptions",
+        "Linkage path section is brief; no examples of what each path type looks like in an annotation",
+        "Phase roadmap is aspirational but not linked to current implementation state"
+      ],
+      "diataxis_gaps": {
+        "tutorial": "MISSING",
+        "how_to": "MISSING",
+        "reference": "PARTIAL — Phase descriptions and model structure provide reference value but are incomplete",
+        "explanation": "STRONG — The problem statement, design principles, and architecture reasoning are well-articulated"
+      },
+      "recommendations": [
+        "Translate to English (or add an English version) for international accessibility",
+        "Link to spec/probe-types.ts as the authoritative source for type definitions rather than re-stating them inline",
+        "Add one concrete annotation example per platform in the platform coverage section"
+      ]
+    },
+    {
+      "file": "DESIGN.md",
+      "line_count": 663,
+      "language": "Chinese (Mandarin) with English code blocks",
+      "primary_diataxis_type": "reference",
+      "secondary_diataxis_type": "explanation",
+      "quality_rating": 4,
+      "quality_scale": "1=unusable, 5=excellent",
+      "strengths": [
+        "Most complete document in the project — covers ProbeElement model, ProbeType enum, Platform Context, all 6 linkage path types, full UITestProbe API, cross-platform SDK architecture, annotation cost model, project structure, and implementation roadmap",
+        "ProbeElement TypeScript interface in section 1 is fully annotated with Chinese comments explaining each field's purpose",
+        "Linkage model (section 2) includes concrete examples for each of the 6 path types with test scenario descriptions",
+        "Pre-check table in section 3 is well-formatted with condition, error code, and rejection response",
+        "Cross-platform annotation table in section 4 shows all 8 platforms with idiom examples",
+        "Phase 1 success criteria code block provides a concrete 'done' definition",
+        "actAndWait flow diagram in section 3 explains the action+wait+linkage pipeline clearly"
+      ],
+      "weaknesses": [
+        "Written entirely in Chinese prose — code examples are English but explanatory text is Chinese, making it inaccessible without translation",
+        "spec/conformance-tests/ is referenced in section 4 but does not exist in the repository — creates false expectation",
+        "Linkage examples use Chinese business domain terms (广东, province/city/district) that may confuse non-Chinese readers",
+        "Windows platform injection section (section 4) lacks implementation detail compared to web/Flutter/iOS",
+        "Project structure diagram (section 6) is slightly out of date — does not show windows-core/windows-wpf/windows-winform/windows-winui split",
+        "No versioning information or change history"
+      ],
+      "diataxis_gaps": {
+        "tutorial": "MISSING — No walkthrough of implementing a new platform SDK or annotating a real application",
+        "how_to": "PARTIAL — Phase success criteria in section 7 functions as a 'how to verify success' guide but is not organized as how-to guides",
+        "reference": "STRONG — The most complete reference document in the project. Covers all key types, all API methods, all platforms.",
+        "explanation": "STRONG — Architecture diagrams, design principles section, and linkage model rationale provide good explanatory depth."
+      },
+      "recommendations": [
+        "Translate to English or add an English companion document",
+        "Remove reference to spec/conformance-tests/ until it exists, or create a minimal version",
+        "Update project structure to reflect the windows-core + windows-wpf/winform/winui split",
+        "Add a 'Implementing a new platform SDK' section as a guide for contributors"
+      ]
+    }
+  ],
+
+  "overall_assessment": {
+    "coverage_by_diataxis_type": {
+      "tutorial": {
+        "present": false,
+        "gap_severity": "critical",
+        "description": "No tutorial exists anywhere in the documentation. A developer cannot follow a step-by-step guide from zero to a working test. This is the most important missing piece for adoption."
+      },
+      "how_to": {
+        "present": false,
+        "gap_severity": "high",
+        "description": "No task-specific how-to guides exist. Common tasks like 'annotate a form', 'test a filter+table interaction', 'set up Playwright integration' have no dedicated documentation."
+      },
+      "reference": {
+        "present": true,
+        "gap_severity": "medium",
+        "description": "DESIGN.md provides substantial reference coverage of types, API, and platforms. However, it is in Chinese and slightly out of date. spec/probe-types.ts is the authoritative machine-readable reference."
+      },
+      "explanation": {
+        "present": true,
+        "gap_severity": "low",
+        "description": "All three documents contribute explanation content. The 'why probe over screenshots', the 6-primitive rationale, and the linkage model reasoning are well-explained."
+      }
+    },
+    "language_accessibility": {
+      "issue": "SPEC.md and DESIGN.md are written in Chinese. This limits accessibility for non-Chinese-speaking contributors and users.",
+      "severity": "high",
+      "recommendation": "At minimum, translate or summarize DESIGN.md into English as the primary technical reference."
+    },
+    "critical_missing_documents": [
+      {
+        "type": "Tutorial",
+        "title": "Getting Started: Test a Web App in 15 Minutes",
+        "audience": "Test Engineers",
+        "content": "Install → annotate 3 elements → write first probe test → run with Playwright. Fully runnable with examples/web-react/."
+      },
+      {
+        "type": "How-to",
+        "title": "How to Annotate a React/Vue/Angular Page",
+        "audience": "Frontend Developers",
+        "content": "Which ProbeType to pick for common widgets, minimal annotation examples, data-probe-linkage JSON format guide."
+      },
+      {
+        "type": "How-to",
+        "title": "How to Set Up Playwright Integration",
+        "audience": "Test Engineers",
+        "content": "npm install, build IIFE bundle, configure injectProbe() in playwright.config.ts, wrap Page in ProbePage, register matchers."
+      },
+      {
+        "type": "How-to",
+        "title": "How to Implement a Platform SDK",
+        "audience": "SDK Contributors",
+        "content": "The 3-layer pattern, required interface methods, pre-check pattern, known platform adaptation challenges."
+      },
+      {
+        "type": "Reference",
+        "title": "Complete API Reference (English)",
+        "audience": "All",
+        "content": "All 44 methods with signatures, parameters, return types, error conditions, and platform availability matrix."
+      }
+    ],
+    "top_3_recommendations": [
+      "Write a 15-minute getting started tutorial against examples/web-react/ — this single document would have the highest adoption impact.",
+      "Translate DESIGN.md to English or write an equivalent English technical reference — the Chinese-only detailed docs are the biggest barrier for the international open-source audience.",
+      "Fix the README code examples to match the actual Playwright ProbePage API — the current examples show page.probe.query() which requires setup steps that are not shown."
+    ]
+  }
+}

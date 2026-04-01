@@ -1,48 +1,59 @@
 /// Core types for the UI Test Probe annotation system.
 
 /// Classification of UI elements by their semantic role.
+/// Matches the canonical 9-value spec in spec/probe-types.ts.
 enum ProbeType {
-  /// Interactive control (button, toggle, slider).
-  control,
+  /// Table, DataGrid, List, Tree.
+  dataContainer,
 
-  /// Data display element (text, label, badge).
+  /// ComboBox, Select, Dropdown.
+  selector,
+
+  /// Button, Link, MenuItem.
+  action,
+
+  /// Label, Badge, Counter, Chip.
   display,
 
-  /// Data input element (text field, picker, checkbox).
-  input,
-
-  /// Navigation element (tab, link, drawer item).
-  navigation,
-
-  /// Layout container (card, list, section).
-  container,
-
-  /// Media element (image, video, audio).
+  /// Image, Video, Audio, Canvas.
   media,
 
-  /// Feedback element (toast, snackbar, dialog).
-  feedback,
+  /// Input, TextArea, Checkbox, Radio.
+  form,
+
+  /// Page-level container — anchor for waitForPageReady().
+  page,
+
+  /// Dialog, Drawer, Popover, Tooltip.
+  modal,
+
+  /// Tabs, Breadcrumb, Sidebar, Paginator.
+  navigation,
 }
 
 /// The effect type of a linkage between probe elements.
+/// Matches the canonical 7-value spec in spec/probe-types.ts.
 enum LinkageEffect {
-  /// Navigates to a different screen or route.
-  navigate,
+  /// Updates available options in a selector.
+  optionsUpdate,
+
+  /// Triggers data reload via API.
+  dataReload,
 
   /// Shows or hides another element.
-  toggle,
+  visibilityToggle,
 
-  /// Triggers a data refresh or fetch.
-  refresh,
+  /// Enables or disables another element.
+  enabledToggle,
 
-  /// Submits data (form submission, API call).
-  submit,
+  /// Updates the value of another element.
+  valueUpdate,
 
-  /// Filters or sorts displayed data.
-  filter,
+  /// Resets another element to default state.
+  reset,
 
-  /// Opens a modal, dialog, or overlay.
-  overlay,
+  /// Triggers navigation to a different route.
+  navigate,
 }
 
 /// Describes a linkage path from one probe element to another.

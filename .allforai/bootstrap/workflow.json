@@ -1,0 +1,100 @@
+{
+  "schema_version": "2.0",
+  "project": "ui-test-probe",
+  "goal": "Functional verification — compile each SDK + E2E test web SDK with Playwright",
+  "planned_at": "2026-04-01T13:00:00Z",
+  "nodes": [
+    {
+      "id": "compile-verify-typescript",
+      "goal": "TypeScript typecheck: sdk/web, integrations/playwright, sdk/react-native, tools/cli",
+      "exit_artifacts": [
+        ".allforai/product-verify/compile-typescript.json"
+      ],
+      "knowledge_refs": ["capabilities/compile-verify.md"],
+      "consumers": ["e2e-test-web"]
+    },
+    {
+      "id": "compile-verify-flutter",
+      "goal": "Flutter analyze: sdk/flutter + integrations/flutter-test",
+      "exit_artifacts": [
+        ".allforai/product-verify/compile-flutter.json"
+      ],
+      "knowledge_refs": ["capabilities/compile-verify.md"],
+      "consumers": []
+    },
+    {
+      "id": "compile-verify-ios",
+      "goal": "Swift build: sdk/ios + integrations/xctest",
+      "exit_artifacts": [
+        ".allforai/product-verify/compile-ios.json"
+      ],
+      "knowledge_refs": ["capabilities/compile-verify.md"],
+      "consumers": []
+    },
+    {
+      "id": "compile-verify-android",
+      "goal": "Gradle build: sdk/android + integrations/compose-test",
+      "exit_artifacts": [
+        ".allforai/product-verify/compile-android.json"
+      ],
+      "knowledge_refs": ["capabilities/compile-verify.md"],
+      "consumers": []
+    },
+    {
+      "id": "e2e-test-web",
+      "goal": "Make examples/web-react runnable, inject probe SDK, run Playwright E2E tests verifying all 6 primitives work",
+      "exit_artifacts": [
+        ".allforai/product-verify/e2e-web-report.json"
+      ],
+      "knowledge_refs": ["capabilities/product-verify.md", "capabilities/test-verify.md"],
+      "consumers": ["verify-report"]
+    },
+    {
+      "id": "verify-report",
+      "goal": "Synthesize all verification results into a unified report",
+      "exit_artifacts": [
+        ".allforai/product-verify/verify-report.json",
+        ".allforai/product-verify/verify-report.md"
+      ],
+      "knowledge_refs": ["capabilities/product-verify.md"],
+      "consumers": []
+    }
+  ],
+  "transition_log": [
+    {
+      "node": "compile-verify-typescript",
+      "status": "completed",
+      "started_at": "2026-04-01T13:10:00Z",
+      "completed_at": "2026-04-01T13:11:00Z",
+      "artifacts_created": [".allforai/product-verify/compile-typescript.json"]
+    },
+    {
+      "node": "compile-verify-ios",
+      "status": "completed",
+      "started_at": "2026-04-01T13:10:00Z",
+      "completed_at": "2026-04-01T13:11:00Z",
+      "artifacts_created": [".allforai/product-verify/compile-ios.json"]
+    },
+    {
+      "node": "compile-verify-android",
+      "status": "completed",
+      "started_at": "2026-04-01T13:10:00Z",
+      "completed_at": "2026-04-01T13:11:00Z",
+      "artifacts_created": [".allforai/product-verify/compile-android.json"]
+    },
+    {
+      "node": "compile-verify-flutter",
+      "status": "completed",
+      "started_at": "2026-04-01T13:10:00Z",
+      "completed_at": "2026-04-01T13:12:00Z",
+      "artifacts_created": [".allforai/product-verify/compile-flutter.json"]
+    },
+    {
+      "node": "e2e-test-web",
+      "status": "completed",
+      "started_at": "2026-04-01T13:13:00Z",
+      "completed_at": "2026-04-01T13:17:00Z",
+      "artifacts_created": [".allforai/product-verify/e2e-web-report.json"]
+    }
+  ]
+}

@@ -14,9 +14,8 @@ class OrderPage extends StatefulWidget {
 class _OrderPageState extends State<OrderPage> {
   String _statusFilter = 'all';
   int _currentPage = 1;
-  bool _showCreateDialog = false;
   List<Map<String, dynamic>> _orders = [];
-  String _pageState = 'loading';
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -25,21 +24,28 @@ class _OrderPageState extends State<OrderPage> {
   }
 
   Future<void> _fetchOrders() async {
-    setState(() => _pageState = 'loading');
-    // ... fetch from API ...
+    setState(() => _isLoading = true);
+    // Simulate API fetch
+    await Future.delayed(const Duration(milliseconds: 100));
     setState(() {
-      _orders = []; // populated from response
-      _pageState = 'loaded';
+      _orders = [
+        {'id': 'ORD-001', 'customer': 'Acme Corp', 'status': 'completed', 'amount': 1500},
+        {'id': 'ORD-002', 'customer': 'Widget Inc', 'status': 'pending', 'amount': 3200},
+        {'id': 'ORD-003', 'customer': 'Foo Bar LLC', 'status': 'cancelled', 'amount': 800},
+      ];
+      if (_statusFilter != 'all') {
+        _orders = _orders.where((o) => o['status'] == _statusFilter).toList();
+      }
+      _isLoading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Probe.page() — page-level wrapper that tracks overall page state
-    // and automatically registers all child ProbeWidgets as descendants.
-    return Probe.page(
+    return ProbeWidget(
       id: 'order-management-page',
-      state: _pageState, // 'loading' | 'loaded' | 'error'
+      type: ProbeType.page,
+      state: {'current': _isLoading ? 'loading' : 'loaded'},
       child: Scaffold(
         appBar: AppBar(title: const Text('Order Management')),
         body: Column(
@@ -49,82 +55,84 @@ class _OrderPageState extends State<OrderPage> {
             _buildPaginator(),
           ],
         ),
-        // Modal — tracked with animation metadata for open/close transitions
         floatingActionButton: _buildCreateButton(),
       ),
     );
   }
 
   Widget _buildToolbar() {
-    return Row(
-      children: [
-        // Status filter — selector with linkage to the order table.
-        // When selection changes, it triggers a data_reload on 'order-table' via API.
-        ProbeWidget(
-          id: 'status-filter',
-          type: ProbeType.selector,
-          linkage: const [
-            ProbeLinkage(
-              target: 'order-table',
-              effect: LinkageEffect.dataReload,
-              path: LinkagePath.api(url: 'GET /api/orders'),
-            ),
-          ],
-          child: DropdownButton<String>(
-            value: _statusFilter,
-            items: const [
-              DropdownMenuItem(value: 'all', child: Text('All')),
-              DropdownMenuItem(value: 'pending', child: Text('Pending')),
-              DropdownMenuItem(value: 'completed', child: Text('Completed')),
-              DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        children: [
+          ProbeWidget(
+            id: 'status-filter',
+            type: ProbeType.selector,
+            state: {'current': 'loaded', 'value': _statusFilter},
+            linkage: [
+              LinkagePath(
+                targetId: 'order-table',
+                effect: LinkageEffect.dataReload,
+              ),
             ],
-            onChanged: (value) {
-              setState(() => _statusFilter = value ?? 'all');
-              _fetchOrders();
-            },
+            child: DropdownButton<String>(
+              value: _statusFilter,
+              items: const [
+                DropdownMenuItem(value: 'all', child: Text('All')),
+                DropdownMenuItem(value: 'pending', child: Text('Pending')),
+                DropdownMenuItem(value: 'completed', child: Text('Completed')),
+                DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
+              ],
+              onChanged: (value) {
+                setState(() => _statusFilter = value ?? 'all');
+                _fetchOrders();
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildOrderTable() {
-    // Data container — exposes row count, column schema, sort/filter state,
-    // and the API source that populates it.
     return ProbeWidget(
       id: 'order-table',
       type: ProbeType.dataContainer,
-      source: const ProbeSource(url: 'GET /api/orders', method: 'GET'),
-      child: DataTable(
-        columns: const [
-          DataColumn(label: Text('Order ID')),
-          DataColumn(label: Text('Customer')),
-          DataColumn(label: Text('Status')),
-          DataColumn(label: Text('Amount')),
-        ],
-        rows: _orders.map((order) {
-          return DataRow(cells: [
-            DataCell(Text(order['id'] ?? '')),
-            DataCell(Text(order['customer'] ?? '')),
-            DataCell(Text(order['status'] ?? '')),
-            DataCell(Text('\$${order['amount'] ?? 0}')),
-          ]);
-        }).toList(),
+      source: 'GET /api/orders',
+      state: {
+        'current': _isLoading ? 'loading' : 'loaded',
+        'rows': _orders.length,
+      },
+      child: SingleChildScrollView(
+        child: DataTable(
+          columns: const [
+            DataColumn(label: Text('Order ID')),
+            DataColumn(label: Text('Customer')),
+            DataColumn(label: Text('Status')),
+            DataColumn(label: Text('Amount')),
+          ],
+          rows: _orders.map((order) {
+            return DataRow(cells: [
+              DataCell(Text(order['id'] ?? '')),
+              DataCell(Text(order['customer'] ?? '')),
+              DataCell(Text(order['status'] ?? '')),
+              DataCell(Text('\$${order['amount'] ?? 0}')),
+            ]);
+          }).toList(),
+        ),
       ),
     );
   }
 
   Widget _buildPaginator() {
-    // Navigation — paginator with linkage to order table.
-    // Page change triggers data_reload on 'order-table'.
     return ProbeWidget(
       id: 'order-paginator',
       type: ProbeType.navigation,
-      linkage: const [
-        ProbeLinkage(
-          target: 'order-table',
+      state: {'current': 'loaded', 'page': _currentPage},
+      linkage: [
+        LinkagePath(
+          targetId: 'order-table',
           effect: LinkageEffect.dataReload,
-          path: LinkagePath.api(url: 'GET /api/orders'),
         ),
       ],
       child: Row(
@@ -145,12 +153,12 @@ class _OrderPageState extends State<OrderPage> {
   }
 
   Widget _buildCreateButton() {
-    // Action button — opens the create order modal
     return ProbeWidget(
       id: 'create-order-btn',
       type: ProbeType.action,
+      state: const {'current': 'loaded'},
       child: FloatingActionButton(
-        onPressed: () => _openCreateDialog(),
+        onPressed: _openCreateDialog,
         child: const Icon(Icons.add),
       ),
     );
@@ -160,19 +168,46 @@ class _OrderPageState extends State<OrderPage> {
     showDialog(
       context: context,
       builder: (ctx) {
-        // Modal — animation tracking for dialog open/close transitions.
-        // Session tracking detects unsaved form changes.
         return ProbeWidget(
           id: 'create-order-modal',
           type: ProbeType.modal,
-          animation: const ProbeAnimation(name: 'dialog-fade'),
-          session: const ProbeSession(trackDirty: true),
+          state: const {'current': 'loaded', 'isOpen': true},
           child: AlertDialog(
             title: const Text('Create Order'),
-            content: _buildCreateForm(),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ProbeWidget(
+                  id: 'customer-input',
+                  type: ProbeType.form,
+                  state: const {'current': 'loaded'},
+                  child: const TextField(
+                    decoration: InputDecoration(labelText: 'Customer Name'),
+                  ),
+                ),
+                ProbeWidget(
+                  id: 'amount-input',
+                  type: ProbeType.form,
+                  state: const {'current': 'loaded'},
+                  child: const TextField(
+                    decoration: InputDecoration(labelText: 'Amount'),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-              ElevatedButton(onPressed: _submitOrder, child: const Text('Create')),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _fetchOrders();
+                },
+                child: const Text('Create'),
+              ),
             ],
           ),
         );
@@ -180,36 +215,8 @@ class _OrderPageState extends State<OrderPage> {
     );
   }
 
-  Widget _buildCreateForm() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Form fields — each tracked as ProbeType.form with validation errors
-        ProbeWidget(
-          id: 'customer-input',
-          type: ProbeType.form,
-          child: const TextField(decoration: InputDecoration(labelText: 'Customer Name')),
-        ),
-        ProbeWidget(
-          id: 'amount-input',
-          type: ProbeType.form,
-          child: const TextField(
-            decoration: InputDecoration(labelText: 'Amount'),
-            keyboardType: TextInputType.number,
-          ),
-        ),
-      ],
-    );
-  }
-
   void _goToPage(int page) {
     setState(() => _currentPage = page);
-    _fetchOrders();
-  }
-
-  void _submitOrder() {
-    // ... submit logic ...
-    Navigator.pop(context);
     _fetchOrders();
   }
 }

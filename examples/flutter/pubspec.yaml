@@ -1,0 +1,21 @@
+name: flutter_probe_example
+description: Order Management demo — demonstrates ui_test_probe Flutter SDK
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  ui_test_probe:
+    path: ../../sdk/flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  ui_test_probe_flutter_test:
+    path: ../../integrations/flutter-test
+  flutter_lints: ^3.0.0

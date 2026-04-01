@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/primary.swiftdeps"
+  },
+  "/Users/aa/workspace/ui-test-probe/sdk/ios/Tests/UITestProbeTests/UITestProbeTests.swift": {
+    "dependencies": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/UITestProbeTests.d",
+    "object": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/UITestProbeTests.swift.o",
+    "swiftmodule": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/UITestProbeTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/UITestProbeTests.swiftdeps",
+    "diagnostics": "/Users/aa/workspace/ui-test-probe/sdk/ios/.build/arm64-apple-macosx/debug/UITestProbeTests.build/UITestProbeTests.dia"
+  }
+}

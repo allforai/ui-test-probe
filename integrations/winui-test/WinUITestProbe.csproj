@@ -1,20 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
-    <RootNamespace>UITestProbe.Net</RootNamespace>
-    <IsPackable>false</IsPackable>
+    <RootNamespace>UITestProbe.WinUITest</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UseMaui>true</UseMaui>
   </PropertyGroup>
-
   <ItemGroup>
-    <ProjectReference Include="..\..\sdk\windows\UITestProbe.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <ProjectReference Include="../../sdk/windows-winui/UITestProbe.WinUI.csproj" />
     <PackageReference Include="MSTest.TestFramework" Version="3.*" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.*" />
   </ItemGroup>
-
 </Project>

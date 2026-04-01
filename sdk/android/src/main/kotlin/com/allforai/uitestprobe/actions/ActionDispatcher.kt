@@ -132,7 +132,7 @@ class ActionDispatcher(
     /**
      * Fill a text input probe element with the given text.
      *
-     * Pre-checks: element must be of type [ProbeType.INPUT], visible, and enabled.
+     * Pre-checks: element must be of type [ProbeType.FORM], visible, and enabled.
      *
      * @param probeId The probe ID of the input element.
      * @param text The text to enter.
@@ -140,7 +140,7 @@ class ActionDispatcher(
      */
     suspend fun fill(probeId: String, text: String): ActionResult {
         registry.scan()
-        val (element, failure) = preCheck(probeId, requiredType = ProbeType.INPUT)
+        val (element, failure) = preCheck(probeId, requiredType = ProbeType.FORM)
         if (failure != null) return failure
 
         val perf = requirePerformer()
@@ -279,31 +279,31 @@ class ActionDispatcher(
                     // Target should now exist (navigated to new screen) or screen changed
                     after != null
                 }
-                LinkageEffect.TOGGLE -> {
+                LinkageEffect.VISIBILITY_TOGGLE -> {
                     // Visibility should have changed
                     val wasBefore = before?.isVisible ?: false
                     val isAfter = after?.isVisible ?: false
                     wasBefore != isAfter
                 }
-                LinkageEffect.REFRESH -> {
+                LinkageEffect.DATA_RELOAD -> {
                     // State should have changed (any change counts)
                     after != null && (before == null || after.state != before.state)
                 }
-                LinkageEffect.SUBMIT -> {
-                    // State should indicate submission occurred (e.g., loading or submitted state)
-                    after != null && (
-                        after.state["loading"] == true ||
-                        after.state["submitted"] == true ||
-                        after.state != before?.state
-                    )
-                }
-                LinkageEffect.FILTER -> {
-                    // State should have changed (filter applied)
+                LinkageEffect.OPTIONS_UPDATE -> {
+                    // Options/value should have changed
                     after != null && after.state != before?.state
                 }
-                LinkageEffect.OVERLAY -> {
-                    // Target should now be visible
-                    after != null && after.isVisible
+                LinkageEffect.ENABLED_TOGGLE -> {
+                    // Enabled state should have changed
+                    after != null && after.state != before?.state
+                }
+                LinkageEffect.VALUE_UPDATE -> {
+                    // Value should have changed
+                    after != null && (before == null || after.state != before.state)
+                }
+                LinkageEffect.RESET -> {
+                    // State or value should have changed
+                    after != null && after.state != before?.state
                 }
             }
         }

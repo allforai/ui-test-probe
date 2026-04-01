@@ -1,0 +1,109 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "build_tools": [
+    { "tool": "tsc (TypeScript Compiler)", "modules": ["M001", "M002", "M007", "M008", "M013", "M014"] },
+    { "tool": "esbuild", "modules": ["M002"], "notes": "Bundles browser-entry.ts into IIFE for injection" },
+    { "tool": "Flutter SDK", "modules": ["M003", "M009"] },
+    { "tool": "Swift Package Manager", "modules": ["M004", "M010"] },
+    { "tool": "Gradle (com.android.library)", "modules": ["M005"] },
+    { "tool": "Gradle (JUnit test)", "modules": ["M011"] },
+    { "tool": "dotnet SDK", "modules": ["M006", "M006a", "M006b", "M006c", "M012", "M012a", "M012b"] }
+  ],
+  "package_managers": [
+    { "manager": "npm", "modules": ["M002", "M007", "M008", "M013", "M014"], "lockfiles": ["sdk/web/package-lock.json", "integrations/playwright/package-lock.json", "package-lock.json"] },
+    { "manager": "pub", "modules": ["M003", "M009"], "lockfiles": [] },
+    { "manager": "SPM (Swift Package Manager)", "modules": ["M004", "M010"], "lockfiles": [] },
+    { "manager": "Gradle", "modules": ["M005", "M011"], "lockfiles": [] },
+    { "manager": "NuGet", "modules": ["M006", "M006a", "M006b", "M006c", "M012", "M012a", "M012b"], "lockfiles": [] }
+  ],
+  "ci_cd": null,
+  "containerization": null,
+  "required_toolchains": [
+    {
+      "tool": "Node.js",
+      "version": ">=18",
+      "modules": ["M002", "M007", "M008", "M013", "M014", "M015"],
+      "notes": "Required for TypeScript compilation. sdk/web uses esbuild for IIFE bundling. tools/cli depends on commander and glob."
+    },
+    {
+      "tool": "TypeScript",
+      "version": ">=5.3",
+      "modules": ["M002", "M007", "M008", "M013", "M014"],
+      "notes": "Strict mode enabled. Target ES2020. Module resolution: bundler."
+    },
+    {
+      "tool": "Flutter SDK",
+      "version": ">=3.0.0 (Dart SDK >=3.0.0 <4.0.0)",
+      "modules": ["M003", "M009"],
+      "notes": "sdk/flutter depends on flutter SDK. integrations/flutter-test depends on flutter_test SDK."
+    },
+    {
+      "tool": "Xcode / Swift",
+      "version": "swift-tools-version 5.9, iOS 16+, macOS 13+",
+      "modules": ["M004", "M010"],
+      "notes": "Uses #if canImport(UIKit) for platform-conditional compilation. ProbeRegistry uses UIKit APIs (UIApplication, UIView hierarchy)."
+    },
+    {
+      "tool": "Android SDK / Gradle / Kotlin",
+      "version": "compileSdk 34, minSdk 24, Kotlin JVM target 17, Compose BOM 2024.02",
+      "modules": ["M005", "M011"],
+      "notes": "Jetpack Compose with custom SemanticsPropertyKeys. Test integration uses ComposeTestRule."
+    },
+    {
+      "tool": ".NET SDK",
+      "version": ">=8.0",
+      "modules": ["M006", "M006a", "M006b", "M006c", "M012", "M012a", "M012b"],
+      "notes": "Core targets net8.0. WPF targets net8.0-windows. WinForms targets net8.0-windows. WinUI targets net8.0-windows10.0.19041.0 with UseMaui. NOT available on this machine."
+    },
+    {
+      "tool": "Playwright",
+      "version": ">=1.40.0",
+      "modules": ["M008"],
+      "notes": "Peer dependency. Integration uses page.addInitScript() and page.evaluate()."
+    },
+    {
+      "tool": "React + React Native",
+      "version": "React >=18.0.0, React Native >=0.72.0",
+      "modules": ["M007", "M013"],
+      "notes": "Peer dependencies for sdk/react-native. Detox integration wraps device APIs."
+    },
+    {
+      "tool": "Commander.js",
+      "version": "^12.0.0",
+      "modules": ["M014"],
+      "notes": "CLI argument parsing framework."
+    }
+  ],
+  "workspace_config": {
+    "root_package_json": "package.json at repo root",
+    "monorepo_tool": "None (manual workspace, no turborepo/nx/lerna)",
+    "shared_config": {
+      "tsconfig": "sdk/web/tsconfig.json includes ../../spec for shared types",
+      "eslint": "sdk/web has eslint script but no shared config file found"
+    }
+  },
+  "notable_dependencies": {
+    "M002": {
+      "devDependencies": {
+        "@types/node": "^20.0.0",
+        "esbuild": "^0.24.2",
+        "eslint": "^9.0.0",
+        "typescript": "^5.5.0"
+      }
+    },
+    "M003": {
+      "dependencies": { "flutter": "sdk" },
+      "devDependencies": { "flutter_test": "sdk", "flutter_lints": "^3.0.0" }
+    },
+    "M005": {
+      "dependencies": { "compose-bom": "2024.02.00", "compose-ui": "latest", "compose-foundation": "latest" }
+    },
+    "M008": {
+      "peerDependencies": { "@playwright/test": ">=1.40.0" },
+      "devDependencies": { "@playwright/test": "^1.48.0", "typescript": "^5.5.0" }
+    },
+    "M014": {
+      "dependencies": { "commander": "^12.0.0", "glob": "^10.3.0", "typescript": "^5.3.0" }
+    }
+  }
+}

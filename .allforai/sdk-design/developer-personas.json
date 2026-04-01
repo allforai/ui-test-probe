@@ -1,0 +1,114 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "source_files_read": [
+    "README.md",
+    "SPEC.md",
+    "DESIGN.md",
+    ".allforai/product-map/source-summary.json"
+  ],
+  "personas": [
+    {
+      "id": "DP1",
+      "name": "Test Engineer",
+      "role": "primary",
+      "expertise_level": "intermediate",
+      "description": "QA or test automation engineer who writes and maintains end-to-end tests. Frustrated by flaky tests caused by timing issues, screenshot-based assertions that miss data correctness, and CSS selector fragility. Wants deterministic, fast, and semantically meaningful test assertions.",
+      "goals": [
+        "Replace screenshot-based verification with structured state queries",
+        "Eliminate flaky tests caused by fixed timeouts and race conditions",
+        "Verify data linkage chains (filter change → API call → table update) in one assertion",
+        "Run the same test across multiple device profiles without rewriting",
+        "Get clear, actionable error messages when pre-checks fail (element not found, disabled, busy)"
+      ],
+      "pain_points_addressed": [
+        "Cannot verify data correctness from screenshots — only visual appearance (~80% accuracy)",
+        "Fixed setTimeout waits cause both slowness and flakiness",
+        "CSS selectors break on refactors without semantic meaning",
+        "No way to verify that a filter change actually triggered the right API call",
+        "Tests pass/fail inconsistently due to timing-dependent assertions"
+      ],
+      "interaction_pattern": "Uses integration SDK (ProbePage for Playwright, ProbeTester for Flutter, ProbeXCTest for iOS, ProbeTestRule for Android, ProbeDevice for Detox). Writes test code against the typed probe API. Relies on waitForState/waitForPageReady for synchronization and actAndWait for composite operations. Uses custom matchers (toHaveProbeState, toHaveProbeData, toBeEffectivelyVisible) for readable assertions.",
+      "tools_used": ["Playwright", "Flutter Test", "XCTest", "Compose UI Test", "Detox", "WPF Test Automation"],
+      "key_api_methods": [
+        "query() — state assertion instead of screenshot",
+        "waitForPageReady() — replaces page.waitForTimeout()",
+        "actAndWait() — action + synchronization + linkage verification",
+        "verifyLinkage() — explicit data flow chain validation",
+        "runAcrossDevices() — responsive/device matrix testing",
+        "snapshot() / diff() — regression baseline comparison"
+      ],
+      "success_metric": "60-page acceptance testing reduced from 2+ hours to 15-30 minutes; flaky tests eliminated by event-driven waits"
+    },
+    {
+      "id": "DP2",
+      "name": "Frontend Developer",
+      "role": "secondary",
+      "expertise_level": "intermediate",
+      "description": "Developer building the UI who adds probe annotations to key controls. Needs the annotation overhead to be minimal (5-10 annotations per page, <30 minutes) and zero-impact in production builds.",
+      "goals": [
+        "Annotate key UI controls with minimal effort (<30 min per page for typical complexity)",
+        "Use platform-native idioms (HTML attributes, SwiftUI modifiers, Compose modifiers)",
+        "Ensure annotations have zero production impact (collector only injected at test time)",
+        "Express data linkages declaratively (data-probe-linkage JSON) for automatic verification",
+        "Get CLI support for auto-generating annotations on existing codebases",
+        "Validate annotation quality via CLI (no duplicate IDs, no orphan linkage targets)"
+      ],
+      "pain_points_addressed": [
+        "Test engineers constantly ask about element selectors and timing — probe gives them semantic access",
+        "Refactoring UI breaks tests written against implementation details",
+        "No standard way to express 'this dropdown controls that table' — linkage model solves this",
+        "data-testid attributes are arbitrary and don't carry semantic meaning"
+      ],
+      "interaction_pattern": "Adds data-probe-* attributes (web), ProbeWidget wrappers (Flutter), .probeId() modifiers (SwiftUI/Compose), or attached properties (WPF/MAUI) to key UI controls. Uses CLI 'instrument' command to auto-annotate existing projects. Uses 'validate' command to check for duplicate IDs, orphan linkages, circular linkages. Uses 'report' command to check coverage.",
+      "tools_used": ["ui-test-probe CLI (instrument/validate/report)", "IDE with framework-specific tooling", "dev-forge (auto-generates annotations in generated code)"],
+      "annotation_cost_model": {
+        "simple_page_2_3_controls": "5 minutes",
+        "medium_page_5_8_controls": "15 minutes",
+        "complex_page_10_15_controls": "30 minutes",
+        "20_page_project_total": "~3 hours",
+        "percent_of_dev_time": "< 5%"
+      },
+      "key_api_methods": [
+        "data-probe-id — required minimum annotation",
+        "data-probe-type — widget category classification",
+        "data-probe-state — runtime state binding",
+        "data-probe-source — API endpoint association",
+        "data-probe-linkage — downstream element declarations"
+      ]
+    },
+    {
+      "id": "DP3",
+      "name": "SDK Contributor",
+      "role": "tertiary",
+      "expertise_level": "advanced",
+      "description": "Engineer implementing a new platform SDK (e.g. adding Electron support, implementing a stub platform). Must understand the full UITestProbe interface, the ProbeElement model, and the 6-primitive contract. Works against spec/probe-types.ts as the authoritative contract.",
+      "goals": [
+        "Implement the complete UITestProbe interface (6 primitives + hierarchy + platform context)",
+        "Map platform UI tree (DOM / Widget Tree / View Hierarchy / SemanticsNode) to ProbeElement model",
+        "Achieve conformance with spec/probe-types.ts type definitions",
+        "Match annotation style to platform idioms while preserving semantic equivalence",
+        "Integrate with the platform test framework (WidgetTester, XCTest, ComposeTestRule, etc.)"
+      ],
+      "pain_points_addressed": [
+        "No conformance test suite yet (spec/conformance-tests/ referenced but not present)",
+        "ProbeType enum divergence (7 vs 9 types) between platforms is undocumented at SDK level",
+        "No CONTRIBUTING.md or platform-porting guide"
+      ],
+      "interaction_pattern": "Reads spec/probe-types.ts as the contract. Reads sdk/web/ as the reference implementation. Implements the same interface in the target language. Writes annotations module (parse/attach metadata), collector module (registry + state observer + source tracker), and actions module (dispatcher with pre-checks). Wires together in a main class.",
+      "tools_used": ["spec/probe-types.ts", "sdk/web/ (reference implementation)", "platform test framework docs"],
+      "key_implementation_files_to_read": [
+        "spec/probe-types.ts — UITestProbe interface contract",
+        "sdk/web/src/probe.ts — composition pattern",
+        "sdk/web/src/actions/dispatcher.ts — pre-check pattern",
+        "sdk/web/src/collector/state-observer.ts — event-driven wait pattern",
+        ".allforai/product-map/source-summary.json — module descriptions"
+      ],
+      "architecture_contract": {
+        "annotations_module": "Reads platform-native metadata and produces ProbeElement fields",
+        "collector_module": "Maintains live registry; observes state changes; intercepts network",
+        "actions_module": "Dispatches real platform events with 5-point pre-checks and linkage verification",
+        "main_class": "Composes all modules; implements UITestProbe interface"
+      }
+    }
+  ]
+}

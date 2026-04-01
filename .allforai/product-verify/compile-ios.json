@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "tool": "swift build",
+  "packages": [
+    {
+      "path": "sdk/ios",
+      "command": "swift build",
+      "exit_code": 1,
+      "errors": [
+        "ActionDispatcher.swift:115:29: error: type 'ProbeType' has no member 'input'"
+      ],
+      "warnings": [
+        "ActionDispatcher.swift:230:13: warning: initialization of immutable value 'element' was never used; consider replacing with assignment to '_' or removing it"
+      ],
+      "status": "fail"
+    },
+    {
+      "path": "integrations/xctest",
+      "command": "swift build",
+      "exit_code": 1,
+      "errors": [
+        "ActionDispatcher.swift:115:29: error: type 'ProbeType' has no member 'input' (from dependency sdk/ios)"
+      ],
+      "warnings": [
+        "ActionDispatcher.swift:230:13: warning: initialization of immutable value 'element' was never used; consider replacing with assignment to '_' or removing it"
+      ],
+      "status": "fail"
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "passed": 0,
+    "failed": 2,
+    "skipped": 0
+  }
+}

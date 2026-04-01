@@ -1,0 +1,577 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "source": "spec/probe-types.ts",
+  "note": "All field definitions are derived from spec/probe-types.ts which is the single authoritative source of truth. Flutter/iOS/Android native SDKs use a simplified 7-type ProbeType enum (control/display/input/navigation/container/media/feedback) vs the spec's 9-type enum — this is a known platform divergence.",
+  "entities": [
+    {
+      "name": "ProbeElement",
+      "description": "Core element model. Every annotated UI control is represented as a ProbeElement with 15 attributes. This is the central data type — all 6 primitives operate on ProbeElement instances.",
+      "source": "spec/probe-types.ts line 80",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": true,
+          "description": "Semantic identifier, e.g. 'order-list'. The only required annotation attribute. Used as the registry key."
+        },
+        {
+          "name": "type",
+          "type": "ProbeType",
+          "required": true,
+          "description": "Widget type from the 9-value ProbeType enum. Determines the shape of the data field extensions."
+        },
+        {
+          "name": "accessibility",
+          "type": "AccessibilityInfo",
+          "required": false,
+          "description": "A11y metadata: role, label, tabIndex. Sourced from ARIA attributes (web) or platform accessibility APIs."
+        },
+        {
+          "name": "state",
+          "type": "StateInfo",
+          "required": true,
+          "description": "Real-time element state. Always present. Contains current state string, previous state, timestamp, isOpen flag for modals, and validation errors."
+        },
+        {
+          "name": "data",
+          "type": "DataInfo",
+          "required": false,
+          "description": "Data payload whose structure extends by ProbeType. Core fields: value, options, rows, columns. data-container adds sort/filter/selectedRows; media adds currentTime/duration/readyState/paused/networkState."
+        },
+        {
+          "name": "source",
+          "type": "SourceInfo",
+          "required": false,
+          "description": "API data source binding. Set when the element has a data-probe-source annotation and the corresponding network request has been intercepted."
+        },
+        {
+          "name": "linkage",
+          "type": "LinkageInfo",
+          "required": false,
+          "description": "Inter-element linkage declarations. Contains an array of LinkageTarget objects, each describing a downstream element, the expected effect, and the path type."
+        },
+        {
+          "name": "layout",
+          "type": "LayoutInfo",
+          "required": true,
+          "description": "Layout metrics from the rendering engine: x, y, width, height, visible flag, renderTime, scrollTop, scrollLeft. Always present — computed at scan time."
+        },
+        {
+          "name": "shortcuts",
+          "type": "ShortcutInfo[]",
+          "required": false,
+          "description": "Keyboard shortcuts bound to this element. Each shortcut has a key string, action description, and optional platform specifier."
+        },
+        {
+          "name": "animation",
+          "type": "AnimationInfo",
+          "required": false,
+          "description": "Animation state: playing flag, name, duration in ms, progress fraction 0-1."
+        },
+        {
+          "name": "locale",
+          "type": "LocaleInfo",
+          "required": false,
+          "description": "Locale and directionality: language code, direction (ltr/rtl), isRTL boolean."
+        },
+        {
+          "name": "theme",
+          "type": "ThemeInfo",
+          "required": false,
+          "description": "Theme context: mode (light/dark/high-contrast) and colorScheme string."
+        },
+        {
+          "name": "eventBindings",
+          "type": "string[]",
+          "required": false,
+          "description": "Array of DOM event type names bound to this element (e.g. ['click', 'change', 'input'])."
+        },
+        {
+          "name": "session",
+          "type": "SessionInfo",
+          "required": false,
+          "description": "Session/form dirty state: isDirty and hasUnsavedChanges flags."
+        },
+        {
+          "name": "parent",
+          "type": "string",
+          "required": false,
+          "description": "Probe ID of the parent element. Used to build the hierarchy tree and support ancestor-chain visibility checks."
+        },
+        {
+          "name": "children",
+          "type": "string[]",
+          "required": false,
+          "description": "Array of probe IDs of direct child elements. Supports queryChildren() and queryDescendants() hierarchy operations."
+        }
+      ],
+      "relationships": [
+        {
+          "target": "ProbeElement",
+          "type": "parent-child",
+          "field": "parent / children",
+          "cardinality": "1:many",
+          "description": "ProbeElements form a tree. parent holds a single probe ID; children holds an array of probe IDs."
+        },
+        {
+          "target": "LinkageTarget",
+          "type": "has-many",
+          "field": "linkage.targets",
+          "cardinality": "1:many",
+          "description": "An element with linkage declarations points to one or more downstream LinkageTarget elements."
+        },
+        {
+          "target": "SourceInfo",
+          "type": "has-one",
+          "field": "source",
+          "cardinality": "1:0-1",
+          "description": "An element with a data-probe-source annotation has one correlated SourceInfo once the network request completes."
+        }
+      ]
+    },
+    {
+      "name": "StateInfo",
+      "description": "Real-time state of a probe element. current is the authoritative state string; previous allows detecting transitions; timestamp records when the last change occurred.",
+      "source": "spec/probe-types.ts line 95 (inline in ProbeElement)",
+      "fields": [
+        { "name": "current", "type": "string", "required": true, "description": "Current state string, e.g. 'loaded', 'loading', 'error', 'disabled', 'submitting', 'idle'." },
+        { "name": "previous", "type": "string", "required": false, "description": "State value before the most recent transition." },
+        { "name": "timestamp", "type": "number", "required": true, "description": "Unix epoch milliseconds when the current state was set." },
+        { "name": "isOpen", "type": "boolean", "required": false, "description": "For modal-type elements: true if the modal is open. Undefined for other types." },
+        { "name": "validationErrors", "type": "Array<{ field: string; message: string }>", "required": false, "description": "Validation error messages. If present and non-empty, the DISABLED pre-check includes the error messages as the 'reason' field." }
+      ]
+    },
+    {
+      "name": "DataInfo",
+      "description": "Data payload for a probe element. Core fields are shared across all types; type-specific extensions are documented in type_specific_shapes.",
+      "source": "spec/probe-types.ts line 108 (inline in ProbeElement)",
+      "fields": [
+        { "name": "value", "type": "unknown", "required": false, "description": "Current value of the element (input value, selected option, etc.)." },
+        { "name": "options", "type": "string[]", "required": false, "description": "Available options for selector-type elements. Used by the 5th pre-check in select() to validate the requested value." },
+        { "name": "rows", "type": "number", "required": false, "description": "Row count for data-container elements." },
+        { "name": "columns", "type": "Array<{ id: string; label: string; visible: boolean }>", "required": false, "description": "Column definitions for table/grid data-container elements." },
+        { "name": "sort", "type": "{ column: string; direction: 'asc' | 'desc' }", "required": false, "description": "Active sort state (data-container only)." },
+        { "name": "filter", "type": "Array<{ field: string; operator: string; value: unknown }>", "required": false, "description": "Active filter criteria (data-container only)." },
+        { "name": "selectedRows", "type": "string[]", "required": false, "description": "IDs or indices of selected rows (data-container only)." },
+        { "name": "currentTime", "type": "number", "required": false, "description": "Playback position in seconds (media only)." },
+        { "name": "duration", "type": "number", "required": false, "description": "Total duration in seconds (media only)." },
+        { "name": "readyState", "type": "number", "required": false, "description": "HTMLMediaElement readyState value 0-4 (media only)." },
+        { "name": "paused", "type": "boolean", "required": false, "description": "Whether the media is currently paused (media only)." },
+        { "name": "networkState", "type": "number", "required": false, "description": "HTMLMediaElement networkState value 0-3 (media only)." }
+      ]
+    },
+    {
+      "name": "SourceInfo",
+      "description": "API data source binding. Populated by the SourceTracker when a network request matching the element's data-probe-source annotation completes.",
+      "source": "spec/probe-types.ts line 128 (inline in ProbeElement)",
+      "fields": [
+        { "name": "url", "type": "string", "required": true, "description": "The matched request URL." },
+        { "name": "method", "type": "string", "required": true, "description": "HTTP method (GET, POST, etc.)." },
+        { "name": "status", "type": "number", "required": false, "description": "HTTP response status code." },
+        { "name": "responseTime", "type": "number", "required": false, "description": "Response time in milliseconds." },
+        { "name": "payload", "type": "unknown", "required": false, "description": "Parsed response body. Populated for JSON responses." }
+      ]
+    },
+    {
+      "name": "LinkageInfo",
+      "description": "Container for the element's linkage declarations — the downstream elements this element drives when interacted with.",
+      "source": "spec/probe-types.ts line 137 (inline in ProbeElement)",
+      "fields": [
+        { "name": "targets", "type": "LinkageTarget[]", "required": true, "description": "Array of downstream elements this element drives, with their expected effects and path types." }
+      ]
+    },
+    {
+      "name": "LinkageTarget",
+      "description": "A single downstream element that a triggering element affects. Declares the target probe ID, the expected effect, and the path mechanism through which the effect travels.",
+      "source": "spec/probe-types.ts line 46",
+      "fields": [
+        { "name": "id", "type": "string", "required": true, "description": "Probe ID of the downstream element." },
+        { "name": "effect", "type": "LinkageEffect", "required": true, "description": "Expected effect: options_update, data_reload, visibility_toggle, enabled_toggle, value_update, reset, or navigate." },
+        { "name": "path", "type": "LinkagePath", "required": true, "description": "The mechanism through which the effect travels. One of: direct, api, computed, store, navigation, or chain." }
+      ]
+    },
+    {
+      "name": "LinkagePath",
+      "description": "Discriminated union describing the mechanism through which a linkage effect propagates. Each variant carries different metadata.",
+      "source": "spec/probe-types.ts line 38",
+      "variants": [
+        { "type": "direct", "fields": [], "description": "Effect propagates through direct JS event/callback without a network call." },
+        { "type": "api", "fields": [{ "name": "url", "type": "string", "required": true }, { "name": "method", "type": "string", "required": false }], "description": "Effect propagates via an API call to the specified URL." },
+        { "type": "computed", "fields": [{ "name": "expression", "type": "string", "required": true }], "description": "Effect is computed from a formula or derived value." },
+        { "type": "store", "fields": [{ "name": "storeName", "type": "string", "required": true }, { "name": "action", "type": "string", "required": false }], "description": "Effect propagates through a state store (Redux, Vuex, Pinia, etc.)." },
+        { "type": "navigation", "fields": [{ "name": "route", "type": "string", "required": true }], "description": "Effect is a navigation to a route." },
+        { "type": "chain", "fields": [{ "name": "through", "type": "string", "required": true }], "description": "Effect chains through an intermediate element identified by its probe ID." }
+      ]
+    },
+    {
+      "name": "LayoutInfo",
+      "description": "Layout metrics from the rendering engine. Present on every ProbeElement. Computed at scan time and updated by the LayoutTracker.",
+      "source": "spec/probe-types.ts line 142 (inline in ProbeElement)",
+      "fields": [
+        { "name": "x", "type": "number", "required": true, "description": "Horizontal position from viewport left edge in CSS pixels." },
+        { "name": "y", "type": "number", "required": true, "description": "Vertical position from viewport top edge in CSS pixels." },
+        { "name": "width", "type": "number", "required": true, "description": "Element width in CSS pixels." },
+        { "name": "height", "type": "number", "required": true, "description": "Element height in CSS pixels." },
+        { "name": "visible", "type": "boolean", "required": true, "description": "Whether the element is geometrically visible in the viewport. Set by IntersectionObserver (web) or platform visibility API. Note: isEffectivelyVisible() checks the full ancestor chain." },
+        { "name": "renderTime", "type": "number", "required": false, "description": "Time in milliseconds for the element to render. Populated by PerformanceObserver on web." },
+        { "name": "scrollTop", "type": "number", "required": false, "description": "Vertical scroll offset of a scrollable element in pixels." },
+        { "name": "scrollLeft", "type": "number", "required": false, "description": "Horizontal scroll offset of a scrollable element in pixels." }
+      ]
+    },
+    {
+      "name": "AccessibilityInfo",
+      "description": "Accessibility metadata for a probe element.",
+      "source": "spec/probe-types.ts line 88 (inline in ProbeElement)",
+      "fields": [
+        { "name": "role", "type": "string", "required": false, "description": "ARIA role or platform accessibility role string." },
+        { "name": "label", "type": "string", "required": false, "description": "Accessible label (aria-label / accessibilityLabel)." },
+        { "name": "tabIndex", "type": "number", "required": false, "description": "Tab order index." }
+      ]
+    },
+    {
+      "name": "ShortcutInfo",
+      "description": "A keyboard shortcut bound to a probe element.",
+      "source": "spec/probe-types.ts line 154 (inline in ProbeElement)",
+      "fields": [
+        { "name": "key", "type": "string", "required": true, "description": "Shortcut key string, e.g. 'Ctrl+S' or 'Meta+Shift+Z'." },
+        { "name": "action", "type": "string", "required": true, "description": "Description of the action triggered by the shortcut." },
+        { "name": "platform", "type": "string", "required": false, "description": "Optional platform specifier (e.g. 'mac', 'windows')." }
+      ]
+    },
+    {
+      "name": "AnimationInfo",
+      "description": "Animation state of a probe element.",
+      "source": "spec/probe-types.ts line 161 (inline in ProbeElement)",
+      "fields": [
+        { "name": "playing", "type": "boolean", "required": true, "description": "Whether an animation is currently in progress." },
+        { "name": "name", "type": "string", "required": false, "description": "CSS animation name or identifier." },
+        { "name": "duration", "type": "number", "required": false, "description": "Animation duration in milliseconds." },
+        { "name": "progress", "type": "number", "required": false, "description": "Animation progress as a fraction 0.0–1.0." }
+      ]
+    },
+    {
+      "name": "LocaleInfo",
+      "description": "Locale and text directionality information for a probe element.",
+      "source": "spec/probe-types.ts line 169 (inline in ProbeElement)",
+      "fields": [
+        { "name": "language", "type": "string", "required": false, "description": "BCP 47 language code, e.g. 'en-US', 'zh-CN', 'ar'." },
+        { "name": "direction", "type": "'ltr' | 'rtl'", "required": false, "description": "Text direction." },
+        { "name": "isRTL", "type": "boolean", "required": false, "description": "Convenience flag equivalent to direction === 'rtl'." }
+      ]
+    },
+    {
+      "name": "ThemeInfo",
+      "description": "Theme context for a probe element.",
+      "source": "spec/probe-types.ts line 176 (inline in ProbeElement)",
+      "fields": [
+        { "name": "mode", "type": "'light' | 'dark' | 'high-contrast'", "required": false, "description": "Active theme mode." },
+        { "name": "colorScheme", "type": "string", "required": false, "description": "Optional named color scheme string." }
+      ]
+    },
+    {
+      "name": "SessionInfo",
+      "description": "Form / session dirty state for a probe element.",
+      "source": "spec/probe-types.ts line 185 (inline in ProbeElement)",
+      "fields": [
+        { "name": "isDirty", "type": "boolean", "required": false, "description": "Whether the element's value has been changed since last save/load." },
+        { "name": "hasUnsavedChanges", "type": "boolean", "required": false, "description": "Whether the element has unsaved changes pending." }
+      ]
+    },
+    {
+      "name": "PlatformContext",
+      "description": "Describes the platform, device, viewport, and input mode under which a test is running. Used by runAcrossDevices() matrix testing and auto-detected by the web SDK from the browser environment.",
+      "source": "spec/probe-types.ts line 230",
+      "fields": [
+        { "name": "platform", "type": "Platform", "required": true, "description": "The platform enum value (web-chrome, web-safari, ios, android, etc.)." },
+        { "name": "device", "type": "DeviceProfile", "required": true, "description": "The device profile describing screen size, pixel ratio, form factor, notch, and safe area." },
+        { "name": "viewport", "type": "{ width: number; height: number }", "required": true, "description": "Current viewport dimensions in CSS pixels." },
+        { "name": "inputMode", "type": "InputMode", "required": true, "description": "Primary input modality: touch, mouse_keyboard, stylus, or gamepad." }
+      ]
+    },
+    {
+      "name": "DeviceProfile",
+      "description": "Physical device characteristics. Used within PlatformContext and loaded from spec/devices.json for the 11 named presets.",
+      "source": "spec/probe-types.ts line 214",
+      "fields": [
+        { "name": "name", "type": "string", "required": true, "description": "Human-readable device name, e.g. 'iPhone 15 Pro'." },
+        { "name": "screenSize", "type": "{ width: number; height: number }", "required": true, "description": "Physical screen size in CSS reference pixels." },
+        { "name": "pixelRatio", "type": "number", "required": true, "description": "Device pixel ratio (DPR)." },
+        { "name": "hasNotch", "type": "boolean", "required": true, "description": "Whether the device has a display notch or Dynamic Island." },
+        { "name": "hasSafeArea", "type": "boolean", "required": true, "description": "Whether the device has safe area insets." },
+        { "name": "formFactor", "type": "FormFactor", "required": true, "description": "Device form factor: phone, tablet, desktop, or foldable." }
+      ]
+    },
+    {
+      "name": "ProbeSnapshot",
+      "description": "A point-in-time snapshot of all registered probe elements and the platform context. Used as a regression baseline for diff() comparison.",
+      "source": "spec/probe-types.ts line 255",
+      "fields": [
+        { "name": "timestamp", "type": "number", "required": true, "description": "Unix epoch milliseconds when the snapshot was taken." },
+        { "name": "elements", "type": "Record<string, ProbeElement>", "required": true, "description": "Map from probe ID to ProbeElement for all registered elements at snapshot time." },
+        { "name": "platformContext", "type": "PlatformContext", "required": true, "description": "The platform context at snapshot time." }
+      ]
+    },
+    {
+      "name": "SnapshotDiff",
+      "description": "A single field-level difference between two ProbeSnapshot instances. diff() returns an array of SnapshotDiff objects.",
+      "source": "spec/probe-types.ts line 261",
+      "fields": [
+        { "name": "elementId", "type": "string", "required": true, "description": "Probe ID of the element that changed." },
+        { "name": "field", "type": "string", "required": true, "description": "Dot-path of the changed field, e.g. 'state.current' or 'data.rows'." },
+        { "name": "before", "type": "unknown", "required": true, "description": "Field value in snapshot a." },
+        { "name": "after", "type": "unknown", "required": true, "description": "Field value in snapshot b." }
+      ]
+    },
+    {
+      "name": "NetworkLogEntry",
+      "description": "A single intercepted network request. Returned by getNetworkLog(). May be correlated to a probe element if the URL matched a data-probe-source annotation.",
+      "source": "spec/probe-types.ts line 272",
+      "fields": [
+        { "name": "url", "type": "string", "required": true, "description": "Request URL." },
+        { "name": "method", "type": "string", "required": true, "description": "HTTP method." },
+        { "name": "status", "type": "number", "required": true, "description": "HTTP response status code." },
+        { "name": "elementId", "type": "string", "required": false, "description": "Probe ID of the element whose source annotation matched this request, if any." },
+        { "name": "timestamp", "type": "number", "required": true, "description": "Unix epoch milliseconds when the request was initiated." }
+      ]
+    },
+    {
+      "name": "TestResult",
+      "description": "Per-device result from runAcrossDevices(). The composite return type is Record<string, TestResult> keyed by device name.",
+      "source": "spec/probe-types.ts line 284",
+      "fields": [
+        { "name": "device", "type": "string", "required": true, "description": "The device preset name used for this run." },
+        { "name": "passed", "type": "boolean", "required": true, "description": "Whether the test function completed without throwing." },
+        { "name": "duration", "type": "number", "required": true, "description": "Test execution time in milliseconds." },
+        { "name": "error", "type": "string", "required": false, "description": "Error message if the test threw. Undefined if passed=true." }
+      ]
+    },
+    {
+      "name": "ProbeActionError",
+      "description": "Thrown (as a plain object, not an Error instance) by all action methods when a pre-check fails. Contains a machine-readable error code and the target probe ID.",
+      "source": "spec/probe-types.ts line 295",
+      "fields": [
+        { "name": "error", "type": "'NOT_FOUND' | 'NOT_VISIBLE' | 'DISABLED' | 'BUSY' | 'OPTION_NOT_FOUND'", "required": true, "description": "Machine-readable error code identifying which pre-check failed." },
+        { "name": "id", "type": "string", "required": true, "description": "Probe ID of the element that failed the pre-check." },
+        { "name": "reason", "type": "string", "required": false, "description": "Human-readable detail. For DISABLED: includes validation error messages. For BUSY: 'Element is loading' or 'Element is submitting'." },
+        { "name": "available", "type": "string[]", "required": false, "description": "For OPTION_NOT_FOUND only: the list of valid option strings from data.options." }
+      ]
+    },
+    {
+      "name": "ActAndWaitResult",
+      "description": "Return value of actAndWait(). Includes timing breakdowns, the final state of the target element, and linkage verification results if linkage was declared.",
+      "source": "spec/probe-types.ts line 306",
+      "fields": [
+        { "name": "actionDuration", "type": "number", "required": true, "description": "Time in milliseconds to dispatch the action." },
+        { "name": "waitDuration", "type": "number", "required": true, "description": "Time in milliseconds from action completion to target state being reached." },
+        { "name": "targetState", "type": "ProbeElement['state']", "required": true, "description": "The state of the target element when the wait resolved." },
+        { "name": "linkageResults", "type": "LinkageResult", "required": false, "description": "Linkage verification results if the trigger element had linkage declarations. Undefined if no linkage." }
+      ]
+    },
+    {
+      "name": "LinkageResult",
+      "description": "Structured result of verifyLinkage(). Contains the trigger element, action string, per-target effect results categorized as direct or chained, and any API calls observed.",
+      "source": "spec/probe-types.ts line 52",
+      "fields": [
+        { "name": "trigger", "type": "string", "required": true, "description": "Probe ID of the element that was interacted with." },
+        { "name": "action", "type": "string", "required": true, "description": "Action string that was performed." },
+        {
+          "name": "directEffects",
+          "type": "Array<{ target: string; effect: string; result: 'pass' | 'fail' | 'timeout'; duration: number }>",
+          "required": true,
+          "description": "Per-target results for direct, api, computed, store, and navigation path types."
+        },
+        {
+          "name": "chainedEffects",
+          "type": "Array<{ target: string; effect: string; through: string; result: 'pass' | 'fail' | 'timeout'; duration: number }>",
+          "required": true,
+          "description": "Per-target results for chain path types. Includes the intermediate element ID in the 'through' field."
+        },
+        {
+          "name": "apiCalls",
+          "type": "Array<{ url: string; method: string; status: number; responseTime: number }>",
+          "required": true,
+          "description": "API calls observed during the linkage window for api-type paths."
+        }
+      ]
+    },
+    {
+      "name": "PageQueryResult",
+      "description": "Return value of queryPage(). Provides a page-level summary without requiring a PAGE-type element to be annotated.",
+      "source": "spec/probe-types.ts line 317",
+      "fields": [
+        { "name": "id", "type": "string", "required": true, "description": "Probe ID of the PAGE element, or 'unknown' if none found." },
+        { "name": "state", "type": "string", "required": true, "description": "State of the PAGE element, or derived state ('loading'/'loaded') based on unreadyElements count." },
+        { "name": "elements", "type": "ProbeElement[]", "required": true, "description": "All registered probe elements on the page." },
+        { "name": "unreadyElements", "type": "string[]", "required": true, "description": "Probe IDs of elements still in loading or submitting state." }
+      ]
+    }
+  ],
+  "enums": [
+    {
+      "name": "ProbeType",
+      "source": "spec/probe-types.ts line 12",
+      "description": "9 widget categories. The spec defines 9 types; some native platform SDKs (Flutter, iOS, Android) use a simplified 7-type enum — this is a known divergence.",
+      "values": [
+        { "value": "data-container", "description": "Table, grid, list, or any container displaying rows of data. Enables sort/filter/selectedRows data extensions." },
+        { "value": "selector", "description": "Dropdown, radio group, segmented control, or any element where the user selects one option from a list." },
+        { "value": "action", "description": "Button, link, icon button, or any element whose primary purpose is triggering an action." },
+        { "value": "display", "description": "Text, badge, label, tooltip, or any read-only display element." },
+        { "value": "media", "description": "Video, audio, or any media player element. Enables currentTime/duration/readyState/paused/networkState data extensions." },
+        { "value": "form", "description": "Input field, textarea, or any element that accepts user text/value input." },
+        { "value": "page", "description": "The root page or screen element. Used by waitForPageReady() as the primary readiness signal." },
+        { "value": "modal", "description": "Dialog, drawer, sheet, or any overlay element. The state.isOpen field carries the open/closed flag." },
+        { "value": "navigation", "description": "Tab bar, side nav, breadcrumb, or any navigation structure element." }
+      ]
+    },
+    {
+      "name": "LinkageEffect",
+      "source": "spec/probe-types.ts line 28",
+      "description": "7 effect types describing what a linkage target experiences when its trigger is interacted with.",
+      "values": [
+        { "value": "options_update", "description": "The target selector's options list is refreshed (e.g. city dropdown updates when province changes)." },
+        { "value": "data_reload", "description": "The target data-container reloads its rows from the API." },
+        { "value": "visibility_toggle", "description": "The target element appears or disappears." },
+        { "value": "enabled_toggle", "description": "The target element transitions between enabled and disabled states." },
+        { "value": "value_update", "description": "The target element's value field is updated." },
+        { "value": "reset", "description": "The target element is reset to its initial/empty state." },
+        { "value": "navigate", "description": "A navigation to a new route is triggered." }
+      ]
+    },
+    {
+      "name": "Platform",
+      "source": "spec/probe-types.ts line 201",
+      "values": [
+        { "value": "web-chrome", "description": "Chrome or Chromium-based browser." },
+        { "value": "web-safari", "description": "Safari on macOS or iOS." },
+        { "value": "web-firefox", "description": "Firefox browser." },
+        { "value": "ios", "description": "iOS native (UIKit / SwiftUI)." },
+        { "value": "android", "description": "Android native (Jetpack Compose / Views)." },
+        { "value": "macos", "description": "macOS native." },
+        { "value": "windows", "description": "Windows native (WPF / WinForms / WinUI / MAUI)." },
+        { "value": "linux", "description": "Linux desktop." }
+      ]
+    },
+    {
+      "name": "InputMode",
+      "source": "spec/probe-types.ts line 223",
+      "values": [
+        { "value": "touch", "description": "Touch screen interaction (fingers)." },
+        { "value": "mouse_keyboard", "description": "Traditional pointer + keyboard." },
+        { "value": "stylus", "description": "Stylus or pen input." },
+        { "value": "gamepad", "description": "Gamepad / controller input." }
+      ]
+    },
+    {
+      "name": "FormFactor",
+      "source": "spec/probe-types.ts line 212",
+      "values": [
+        { "value": "phone", "description": "Smartphone form factor." },
+        { "value": "tablet", "description": "Tablet form factor." },
+        { "value": "desktop", "description": "Desktop or laptop." },
+        { "value": "foldable", "description": "Foldable device (e.g. Galaxy Fold)." }
+      ]
+    },
+    {
+      "name": "ViewportPreset",
+      "source": "spec/probe-types.ts line 238",
+      "description": "11 named device presets from spec/devices.json. Pass to setDevice() or runAcrossDevices().",
+      "values": [
+        { "value": "iphone-se", "description": "iPhone SE (3rd gen) — 375×667, 2x DPR, phone" },
+        { "value": "iphone-15-pro", "description": "iPhone 15 Pro — 393×852, 3x DPR, notch, phone" },
+        { "value": "ipad-air", "description": "iPad Air — 820×1180, 2x DPR, tablet" },
+        { "value": "ipad-pro-12", "description": "iPad Pro 12.9\" — 1024×1366, 2x DPR, tablet" },
+        { "value": "pixel-8", "description": "Google Pixel 8 — 412×915, 2.625x DPR, phone" },
+        { "value": "galaxy-s24", "description": "Samsung Galaxy S24 — 360×780, 3x DPR, phone" },
+        { "value": "galaxy-tab-s9", "description": "Samsung Galaxy Tab S9 — 800×1280, 2x DPR, tablet" },
+        { "value": "galaxy-fold", "description": "Samsung Galaxy Z Fold — 717×953 folded, 2x DPR, foldable" },
+        { "value": "macbook-air-13", "description": "MacBook Air 13\" — 1280×800, 2x DPR, desktop" },
+        { "value": "desktop-1080p", "description": "1920×1080 desktop monitor, 1x DPR" },
+        { "value": "desktop-1440p", "description": "2560×1440 desktop monitor, 1x DPR" }
+      ]
+    }
+  ],
+  "type_specific_shapes": [
+    {
+      "probe_type": "data-container",
+      "description": "Tables, grids, and lists. In addition to core data fields (value, options, rows, columns), the data field gains sort/filter/selectedRows.",
+      "extra_fields": [
+        { "name": "sort", "type": "{ column: string; direction: 'asc' | 'desc' }", "description": "Active sort column and direction." },
+        { "name": "filter", "type": "Array<{ field: string; operator: string; value: unknown }>", "description": "Active filter criteria stack." },
+        { "name": "selectedRows", "type": "string[]", "description": "Probe IDs or indices of currently selected rows." },
+        { "name": "columns", "type": "Array<{ id: string; label: string; visible: boolean }>", "description": "Column definitions including visibility toggle state." }
+      ],
+      "state_values": ["loading", "loaded", "error", "empty"],
+      "linkage_effects": ["data_reload", "options_update"]
+    },
+    {
+      "probe_type": "media",
+      "description": "Video and audio players. Gains media-specific data fields matching HTMLMediaElement properties.",
+      "extra_fields": [
+        { "name": "currentTime", "type": "number", "description": "Playback position in seconds." },
+        { "name": "duration", "type": "number", "description": "Total duration in seconds." },
+        { "name": "readyState", "type": "number", "description": "HTMLMediaElement readyState (0=HAVE_NOTHING, 1=HAVE_METADATA, 2=HAVE_CURRENT_DATA, 3=HAVE_FUTURE_DATA, 4=HAVE_ENOUGH_DATA)." },
+        { "name": "paused", "type": "boolean", "description": "True if media is paused." },
+        { "name": "networkState", "type": "number", "description": "HTMLMediaElement networkState (0=EMPTY, 1=IDLE, 2=LOADING, 3=NO_SOURCE)." }
+      ],
+      "state_values": ["loading", "playing", "paused", "ended", "error"]
+    },
+    {
+      "probe_type": "selector",
+      "description": "Dropdowns, radio groups, segmented controls.",
+      "extra_fields": [
+        { "name": "options", "type": "string[]", "description": "Available option values. Required for the OPTION_NOT_FOUND pre-check on select()." },
+        { "name": "value", "type": "unknown", "description": "Currently selected option value." }
+      ],
+      "state_values": ["idle", "loading", "loaded", "disabled"],
+      "linkage_effects": ["options_update", "enabled_toggle"]
+    },
+    {
+      "probe_type": "form",
+      "description": "Input fields and textareas.",
+      "extra_fields": [
+        { "name": "value", "type": "unknown", "description": "Current input value." },
+        { "name": "validationErrors", "type": "Array<{ field: string; message: string }>", "description": "Stored in state.validationErrors — used by DISABLED pre-check reason." }
+      ],
+      "state_values": ["idle", "dirty", "disabled", "error", "submitted"],
+      "linkage_effects": ["enabled_toggle", "value_update", "reset"]
+    },
+    {
+      "probe_type": "modal",
+      "description": "Dialogs, drawers, sheets, and overlays.",
+      "extra_fields": [
+        { "name": "isOpen", "type": "boolean", "description": "Stored in state.isOpen. True when the modal is displayed." }
+      ],
+      "state_values": ["open", "closed", "loading"],
+      "linkage_effects": ["visibility_toggle"]
+    },
+    {
+      "probe_type": "navigation",
+      "description": "Tab bars, side navs, breadcrumbs, and navigation containers.",
+      "extra_fields": [
+        { "name": "value", "type": "unknown", "description": "Active route or selected tab identifier." }
+      ],
+      "state_values": ["idle", "loading"],
+      "linkage_effects": ["navigate"]
+    },
+    {
+      "probe_type": "action",
+      "description": "Buttons, links, and icon buttons. No data extensions. State indicates loading/submitting for async actions.",
+      "extra_fields": [],
+      "state_values": ["idle", "loading", "submitting", "disabled", "error"]
+    },
+    {
+      "probe_type": "display",
+      "description": "Read-only text, badges, labels, and tooltips. No data extensions beyond value.",
+      "extra_fields": [
+        { "name": "value", "type": "unknown", "description": "Displayed text or value content." }
+      ],
+      "state_values": ["visible", "hidden", "loading"]
+    },
+    {
+      "probe_type": "page",
+      "description": "The root page/screen element. Used as the primary readiness signal by waitForPageReady().",
+      "extra_fields": [],
+      "state_values": ["loading", "loaded", "error"]
+    }
+  ]
+}

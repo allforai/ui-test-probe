@@ -104,7 +104,7 @@ public class ActionDispatcher {
 
     /// Fill a text input probe element with the given text.
     ///
-    /// Pre-checks: element must be of type `.input`, visible, and enabled.
+    /// Pre-checks: element must be of type `.form`, visible, and enabled.
     /// - Parameters:
     ///   - probeId: The probe ID of the input element.
     ///   - text: The text to enter.
@@ -112,7 +112,7 @@ public class ActionDispatcher {
     public func fill(_ probeId: String, text: String) async throws -> ActionResult {
         let element = try preCheck(probeId)
 
-        if element.type != .input {
+        if element.type != .form {
             throw ActionError.incompatibleType(probeId, element.type)
         }
 
@@ -268,7 +268,7 @@ public class ActionDispatcher {
         for path in element.linkage {
             guard let targetAfter = registry.query(path.targetId) else {
                 // Target element disappeared -- could be valid for navigate/toggle
-                if path.effect == .navigate || path.effect == .toggle {
+                if path.effect == .navigate || path.effect == .visibilityToggle {
                     continue
                 }
                 return false
@@ -282,31 +282,34 @@ public class ActionDispatcher {
                 if targetAfter.screen == targetBefore?.screen && targetBefore != nil {
                     return false
                 }
-            case .toggle:
+            case .visibilityToggle:
                 // Verify visibility changed
                 if targetAfter.isVisible == targetBefore?.isVisible {
                     return false
                 }
-            case .refresh:
+            case .dataReload:
                 // Verify state changed (any state change counts)
                 if targetAfter.state == targetBefore?.state {
                     return false
                 }
-            case .submit:
-                // Verify the target transitioned through a loading/submitting state
-                let hasLoadingState = targetAfter.state["loading"] != nil
-                    || targetAfter.state["submitting"] != nil
-                if !hasLoadingState && targetAfter.state == targetBefore?.state {
+            case .optionsUpdate:
+                // Verify options/value changed
+                if targetAfter.value == targetBefore?.value {
                     return false
                 }
-            case .filter:
-                // Verify the target's data or state changed
+            case .enabledToggle:
+                // Verify enabled state changed
+                if targetAfter.state == targetBefore?.state {
+                    return false
+                }
+            case .valueUpdate:
+                // Verify value changed
+                if targetAfter.value == targetBefore?.value {
+                    return false
+                }
+            case .reset:
+                // Verify the target's state or value changed
                 if targetAfter.state == targetBefore?.state && targetAfter.value == targetBefore?.value {
-                    return false
-                }
-            case .overlay:
-                // Verify the target became visible
-                if !targetAfter.isVisible {
                     return false
                 }
             }

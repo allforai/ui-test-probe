@@ -1,0 +1,563 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "total_use_cases": 30,
+  "coverage_summary": {
+    "happy_path_per_primitive": 6,
+    "error_cases": 6,
+    "timeout_cases": 2,
+    "cross_platform": 1,
+    "composite_actandwait_linkage": 3,
+    "snapshot_diff": 2,
+    "hierarchy_visibility": 2,
+    "source_binding": 2,
+    "state_subscription": 2,
+    "layout_metrics": 2
+  },
+  "categories": [
+    {
+      "id": "CAT1",
+      "name": "Element Registry",
+      "description": "Primitive 1 — Register and query annotated UI elements by semantic probe ID.",
+      "features": [
+        {
+          "id": "F1",
+          "name": "Query element by ID",
+          "scenarios": [
+            {
+              "id": "UC001",
+              "name": "Query existing element returns full ProbeElement",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A page with <table data-probe-id='order-list' data-probe-type='data-container' data-probe-state='loaded'> rendered and the probe collector injected",
+              "when": "probe.query('order-list') is called",
+              "then": "Returns a ProbeElement with id='order-list', type='data-container', state.current='loaded', layout.visible=true, layout.width > 0",
+              "api_method": "query",
+              "error_codes": []
+            },
+            {
+              "id": "UC002",
+              "name": "Query non-existent element returns null",
+              "type": "edge",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A page with no element having probe ID 'missing-widget'",
+              "when": "probe.query('missing-widget') is called",
+              "then": "Returns null without throwing",
+              "api_method": "query",
+              "error_codes": []
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "name": "Query all elements filtered by type",
+          "scenarios": [
+            {
+              "id": "UC003",
+              "name": "queryAll with type filter returns only matching elements",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A page with 3 action-type, 2 form-type, and 1 data-container-type annotated elements registered",
+              "when": "probe.queryAll('action') is called",
+              "then": "Returns an array of exactly 3 ProbeElement objects all having type='action'",
+              "api_method": "queryAll",
+              "error_codes": []
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "name": "Query page summary",
+          "scenarios": [
+            {
+              "id": "UC004",
+              "name": "queryPage returns page summary including unready elements",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A page with a <div data-probe-id='orders-page' data-probe-type='page' data-probe-state='loading'> and two child elements still loading",
+              "when": "probe.queryPage() is called",
+              "then": "Returns { id: 'orders-page', state: 'loading', elements: [...all elements], unreadyElements: ['order-list', 'filter-bar'] } where unreadyElements contains the IDs of still-loading elements",
+              "api_method": "queryPage",
+              "error_codes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CAT2",
+      "name": "State Exposure",
+      "description": "Primitive 2 — Expose real-time element state as structured data for assertion without screenshot inspection.",
+      "features": [
+        {
+          "id": "F4",
+          "name": "Read element state",
+          "scenarios": [
+            {
+              "id": "UC005",
+              "name": "getState returns current state after element is loaded",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A page with <div data-probe-id='order-list' data-probe-state='loaded'> and the probe collector active",
+              "when": "probe.getState('order-list') is called",
+              "then": "Returns a StateInfo object with current='loaded', timestamp set to a recent epoch millisecond value",
+              "api_method": "getState",
+              "error_codes": []
+            },
+            {
+              "id": "UC006",
+              "name": "getStates returns batch state map",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A page with 3 annotated elements: 'order-list' (loaded), 'status-filter' (idle), 'submit-btn' (disabled)",
+              "when": "probe.getStates(['order-list', 'status-filter', 'submit-btn']) is called",
+              "then": "Returns { 'order-list': { current: 'loaded', ... }, 'status-filter': { current: 'idle', ... }, 'submit-btn': { current: 'disabled', ... } } with all three entries populated",
+              "api_method": "getStates",
+              "error_codes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CAT3",
+      "name": "Event Stream",
+      "description": "Primitive 3 — Event-driven waits and subscriptions instead of polling or fixed timeouts.",
+      "features": [
+        {
+          "id": "F5",
+          "name": "Wait for element state",
+          "scenarios": [
+            {
+              "id": "UC007",
+              "name": "waitForState resolves when element transitions to target state",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "An element 'order-list' currently in state 'loading'. The application updates data-probe-state to 'loaded' after the API call completes 300ms later.",
+              "when": "probe.waitForState('order-list', 'loaded') is awaited",
+              "then": "The promise resolves within ~300ms (event-driven, not polling) without waiting for any fixed timeout",
+              "api_method": "waitForState",
+              "error_codes": []
+            },
+            {
+              "id": "UC008",
+              "name": "waitForState times out when state never reached",
+              "type": "error",
+              "persona": "DP1 (Test Engineer)",
+              "given": "An element 'broken-list' whose data-probe-state attribute is never updated by the application",
+              "when": "probe.waitForState('broken-list', 'loaded', 2000) is awaited",
+              "then": "The promise rejects after 2000ms with Error: \"waitForState('broken-list', 'loaded') timed out after 2000ms\"",
+              "api_method": "waitForState",
+              "error_codes": ["TIMEOUT"]
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "name": "Wait for page ready",
+          "scenarios": [
+            {
+              "id": "UC009",
+              "name": "waitForPageReady resolves when page element reaches loaded",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A page with <div data-probe-id='orders-page' data-probe-type='page' data-probe-state='loading'>. The application updates state to 'loaded' after initial data fetch completes.",
+              "when": "probe.waitForPageReady() is awaited",
+              "then": "The promise resolves once data-probe-state changes to 'loaded', event-driven with no polling delay",
+              "api_method": "waitForPageReady",
+              "error_codes": []
+            },
+            {
+              "id": "UC010",
+              "name": "waitForPageReady times out listing still-loading elements",
+              "type": "error",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A page where 'order-list' remains in state 'loading' because the API call is hanging",
+              "when": "probe.waitForPageReady(5000) is awaited",
+              "then": "The promise rejects with Error: \"waitForPageReady timed out. Still loading: order-list\" after 5000ms",
+              "api_method": "waitForPageReady",
+              "error_codes": ["TIMEOUT"]
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "name": "Subscribe to state changes",
+          "scenarios": [
+            {
+              "id": "UC011",
+              "name": "onStateChange callback fires on every state transition",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "An element 'submit-btn' registered with the probe collector",
+              "when": "probe.onStateChange('submit-btn', (oldState, newState) => transitions.push({ oldState, newState })) is called, and the button transitions from 'idle' → 'submitting' → 'idle'",
+              "then": "The callback fires twice. transitions[0] = { oldState: 'idle', newState: 'submitting' }, transitions[1] = { oldState: 'submitting', newState: 'idle' }. The returned unsubscribe function cleans up the listener.",
+              "api_method": "onStateChange",
+              "error_codes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CAT4",
+      "name": "Source Binding",
+      "description": "Primitive 4 — Link UI elements to their API data sources and wait for network requests to complete.",
+      "features": [
+        {
+          "id": "F8",
+          "name": "Wait for source binding after API call",
+          "scenarios": [
+            {
+              "id": "UC012",
+              "name": "waitForSource resolves after matching network request completes",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A data table annotated with data-probe-source='GET /api/orders'. The page has just loaded and the GET /api/orders request is in-flight.",
+              "when": "probe.waitForSource('order-list') is awaited",
+              "then": "Resolves with SourceInfo: { url: '/api/orders', method: 'GET', status: 200, responseTime: <ms> } once the request completes. The element's source field is populated.",
+              "api_method": "waitForSource",
+              "error_codes": []
+            },
+            {
+              "id": "UC013",
+              "name": "getNetworkLog returns all intercepted requests with element correlation",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "Two API calls made after page load: GET /api/orders (matched to 'order-list') and GET /api/users (not matched to any element)",
+              "when": "probe.getNetworkLog() is called after both requests complete",
+              "then": "Returns an array of 2 NetworkLogEntry objects. The first has elementId='order-list'. The second has elementId=undefined.",
+              "api_method": "getNetworkLog",
+              "error_codes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CAT5",
+      "name": "Layout Metrics",
+      "description": "Primitive 5 — Position, size, visibility, scroll, and render timing from the rendering engine.",
+      "features": [
+        {
+          "id": "F9",
+          "name": "Get element layout",
+          "scenarios": [
+            {
+              "id": "UC014",
+              "name": "getLayout returns position and size metrics",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A button element 'submit-btn' rendered at pixel position (100, 200) with dimensions 120×40 and visible in the viewport",
+              "when": "probe.getLayout('submit-btn') is called",
+              "then": "Returns LayoutInfo with x=100, y=200, width=120, height=40, visible=true",
+              "api_method": "getLayout",
+              "error_codes": []
+            },
+            {
+              "id": "UC015",
+              "name": "getOverlaps detects overlapping probe elements",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A page where a tooltip element 'error-tooltip' overlaps the 'submit-btn' element by a 50×20 pixel area",
+              "when": "probe.getOverlaps() is called (web platform)",
+              "then": "Returns [{ a: 'submit-btn', b: 'error-tooltip', overlapArea: 1000 }] where overlapArea=1000 (50*20)",
+              "api_method": "getOverlaps",
+              "platform_note": "Web only — getOverlaps is not implemented on Flutter, iOS, Android, Windows, or React Native",
+              "error_codes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CAT6",
+      "name": "Action Dispatch",
+      "description": "Primitive 6 — Semantic action dispatch with 5-point pre-checks and automatic linkage verification.",
+      "features": [
+        {
+          "id": "F10",
+          "name": "Click action",
+          "scenarios": [
+            {
+              "id": "UC016",
+              "name": "click dispatches real DOM event on a visible enabled element",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A button <button data-probe-id='submit-btn' data-probe-state='idle'> that is visible and enabled. A click listener sets a clickedFlag.",
+              "when": "probe.click('submit-btn') is awaited",
+              "then": "The real DOM click event fires, clickedFlag is true. No ProbeActionError thrown.",
+              "api_method": "click",
+              "error_codes": []
+            }
+          ]
+        },
+        {
+          "id": "F11",
+          "name": "Fill input atomically",
+          "scenarios": [
+            {
+              "id": "UC017",
+              "name": "fill sets React controlled input value correctly",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A React controlled input <input data-probe-id='search-box' value={searchTerm}> with an onChange handler that updates state",
+              "when": "probe.fill('search-box', 'ORDER-123') is awaited",
+              "then": "The native value setter + input + change events trigger React's onChange, resulting in the input displaying 'ORDER-123' and the React state being updated",
+              "api_method": "fill",
+              "error_codes": []
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "name": "Select option with validation",
+          "scenarios": [
+            {
+              "id": "UC018",
+              "name": "select succeeds with valid option",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A dropdown <select data-probe-id='status-filter' data-probe-type='selector'> with data.options=['all', 'pending', 'completed', 'cancelled'] in state 'idle'",
+              "when": "probe.select('status-filter', 'completed') is awaited",
+              "then": "The change event fires with value='completed'. The element's data.value is updated to 'completed'. No ProbeActionError thrown.",
+              "api_method": "select",
+              "error_codes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CAT7",
+      "name": "Action Dispatch — Pre-Check Errors",
+      "description": "The 5-point pre-check sequence throws structured ProbeActionError objects for machine-readable failure diagnosis.",
+      "features": [
+        {
+          "id": "F13",
+          "name": "NOT_FOUND error",
+          "scenarios": [
+            {
+              "id": "UC019",
+              "name": "click on unregistered element throws NOT_FOUND",
+              "type": "error",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A page with no element having probe ID 'delete-btn' (annotation missing or element not in DOM)",
+              "when": "probe.click('delete-btn') is awaited",
+              "then": "Throws ProbeActionError: { error: 'NOT_FOUND', id: 'delete-btn' }. The error object is a plain JS object, not an Error instance.",
+              "api_method": "click",
+              "error_codes": ["NOT_FOUND"]
+            }
+          ]
+        },
+        {
+          "id": "F14",
+          "name": "NOT_VISIBLE error",
+          "scenarios": [
+            {
+              "id": "UC020",
+              "name": "click on hidden element throws NOT_VISIBLE",
+              "type": "error",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A button 'export-btn' registered in the probe registry with layout.visible=false (scrolled out of viewport or hidden by CSS)",
+              "when": "probe.click('export-btn') is awaited",
+              "then": "Throws ProbeActionError: { error: 'NOT_VISIBLE', id: 'export-btn' } before any DOM event is dispatched",
+              "api_method": "click",
+              "error_codes": ["NOT_VISIBLE"]
+            }
+          ]
+        },
+        {
+          "id": "F15",
+          "name": "DISABLED error",
+          "scenarios": [
+            {
+              "id": "UC021",
+              "name": "click on disabled element throws DISABLED with reason",
+              "type": "error",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A submit button 'submit-order-btn' with state.current='disabled' and state.validationErrors=[{ field: 'quantity', message: 'Required' }]",
+              "when": "probe.click('submit-order-btn') is awaited",
+              "then": "Throws ProbeActionError: { error: 'DISABLED', id: 'submit-order-btn', reason: 'quantity: Required' } where reason concatenates the validation error messages",
+              "api_method": "click",
+              "error_codes": ["DISABLED"]
+            }
+          ]
+        },
+        {
+          "id": "F16",
+          "name": "BUSY error",
+          "scenarios": [
+            {
+              "id": "UC022",
+              "name": "click on loading element throws BUSY",
+              "type": "error",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A button 'refresh-btn' whose state.current='loading' because a previous click is still in-flight",
+              "when": "probe.click('refresh-btn') is awaited",
+              "then": "Throws ProbeActionError: { error: 'BUSY', id: 'refresh-btn', reason: 'Element is loading' } without dispatching a new click event",
+              "api_method": "click",
+              "error_codes": ["BUSY"]
+            }
+          ]
+        },
+        {
+          "id": "F17",
+          "name": "OPTION_NOT_FOUND error",
+          "scenarios": [
+            {
+              "id": "UC023",
+              "name": "select with invalid value throws OPTION_NOT_FOUND with available list",
+              "type": "error",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A dropdown 'status-filter' with data.options=['all', 'pending', 'completed'] in state 'idle'",
+              "when": "probe.select('status-filter', 'archived') is awaited",
+              "then": "Throws ProbeActionError: { error: 'OPTION_NOT_FOUND', id: 'status-filter', available: ['all', 'pending', 'completed'] } before any DOM event is dispatched",
+              "api_method": "select",
+              "error_codes": ["OPTION_NOT_FOUND"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CAT8",
+      "name": "Composite Operations",
+      "description": "High-level composite operations: actAndWait combines action + state wait + automatic linkage verification; verifyLinkage validates data flow chains explicitly.",
+      "features": [
+        {
+          "id": "F18",
+          "name": "actAndWait with automatic linkage verification",
+          "scenarios": [
+            {
+              "id": "UC024",
+              "name": "actAndWait selects option, waits for target state, auto-verifies linkage",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A dropdown 'status-filter' with data-probe-linkage='[{\"id\":\"order-list\",\"effect\":\"data_reload\",\"path\":{\"type\":\"api\",\"url\":\"/api/orders\"}}]'. Selecting 'completed' triggers a GET /api/orders?status=completed call which reloads the table.",
+              "when": "probe.actAndWait('status-filter', 'select:completed', { target: 'order-list', state: 'loaded' }) is awaited",
+              "then": "Returns ActAndWaitResult with actionDuration (ms to dispatch select), waitDuration (ms to reach 'loaded'), targetState.current='loaded', and linkageResults showing directEffects[0].target='order-list', result='pass', plus apiCalls[0].url='/api/orders' with status=200",
+              "api_method": "actAndWait",
+              "error_codes": []
+            },
+            {
+              "id": "UC025",
+              "name": "actAndWait returns timeout linkage result when target does not respond",
+              "type": "error",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A 'status-filter' element with a linkage declaration to 'order-list', but the order-list element never emits a state-change event because the data flow is broken",
+              "when": "probe.actAndWait('status-filter', 'select:completed', { target: 'order-list', state: 'loaded', timeout: 5000 }) is awaited",
+              "then": "The actAndWait wait for target state resolves or times out, and linkageResults.directEffects[0].result='timeout'. The method does not throw — timeout is surfaced in the result, not as an exception.",
+              "api_method": "actAndWait",
+              "error_codes": []
+            },
+            {
+              "id": "UC026",
+              "name": "verifyLinkage validates multi-target cascade linkage chain",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A province selector 'province-select' with linkage targets: [{id:'city-select', effect:'options_update', path:{type:'api', url:'/api/cities'}}, {id:'district-select', effect:'options_update', path:{type:'chain', through:'city-select'}}]. Selecting a province triggers an API call that updates city options, which in turn triggers district options update.",
+              "when": "probe.select('province-select', 'Guangdong') is awaited, then probe.verifyLinkage('province-select', 'select:Guangdong') is awaited",
+              "then": "Returns LinkageResult with directEffects=[{target:'city-select', effect:'options_update', result:'pass', duration:<ms>}], chainedEffects=[{target:'district-select', effect:'options_update', through:'city-select', result:'pass', duration:<ms>}], apiCalls=[{url:'/api/cities', status:200, ...}]",
+              "api_method": "verifyLinkage",
+              "error_codes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CAT9",
+      "name": "Snapshot and Diff",
+      "description": "Point-in-time state capture and field-level comparison for regression baseline testing.",
+      "features": [
+        {
+          "id": "F19",
+          "name": "Snapshot baseline and regression comparison",
+          "scenarios": [
+            {
+              "id": "UC027",
+              "name": "snapshot captures all element states at a point in time",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A page with 5 annotated elements all in loaded/idle state",
+              "when": "const baseline = probe.snapshot() is called after page load",
+              "then": "Returns ProbeSnapshot with timestamp (epoch ms), elements (Record keyed by probe ID containing all 5 ProbeElements), and platformContext reflecting the current device/viewport",
+              "api_method": "snapshot",
+              "error_codes": []
+            },
+            {
+              "id": "UC028",
+              "name": "diff returns field-level changes between two snapshots",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A baseline snapshot where order-list has data.rows=10 and state.current='loaded'. After filtering, a second snapshot where order-list has data.rows=3 and state.current='loaded'.",
+              "when": "probe.diff(baseline, afterFilter) is called",
+              "then": "Returns [{ elementId: 'order-list', field: 'data.rows', before: 10, after: 3 }]. Only changed fields appear in the diff.",
+              "api_method": "diff",
+              "error_codes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CAT10",
+      "name": "Hierarchy — Effective Visibility",
+      "description": "Ancestor-chain visibility checks. isEffectivelyVisible() walks the parent chain so a visible child inside a hidden container correctly reports as not visible.",
+      "features": [
+        {
+          "id": "F20",
+          "name": "Effective visibility with hidden parent",
+          "scenarios": [
+            {
+              "id": "UC029",
+              "name": "isEffectivelyVisible returns false when ancestor is hidden",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A panel 'advanced-filters' with layout.visible=false. A child input 'date-range-input' inside the panel with its own layout.visible=true (the element itself is not hidden, but its parent panel is collapsed).",
+              "when": "probe.isEffectivelyVisible('date-range-input') is called",
+              "then": "Returns false — because getAncestorChain('date-range-input') includes 'advanced-filters' which has visible=false, so the full chain check fails",
+              "api_method": "isEffectivelyVisible",
+              "error_codes": []
+            },
+            {
+              "id": "UC030",
+              "name": "queryChildren returns direct children of a container",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A 'filter-toolbar' element with children=['status-filter', 'date-range', 'search-box'] in its probe annotation",
+              "when": "probe.queryChildren('filter-toolbar') is called",
+              "then": "Returns an array of 3 ProbeElement objects with ids ['status-filter', 'date-range', 'search-box'], resolved from the registry",
+              "api_method": "queryChildren",
+              "error_codes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CAT11",
+      "name": "Platform Context — Device Matrix Testing",
+      "description": "Apply named device presets and run tests across multiple device profiles for responsive layout and behavior verification.",
+      "features": [
+        {
+          "id": "F21",
+          "name": "Run test across multiple device profiles",
+          "scenarios": [
+            {
+              "id": "UC031",
+              "name": "runAcrossDevices executes test on each device and returns per-device results",
+              "type": "happy",
+              "persona": "DP1 (Test Engineer)",
+              "given": "A responsive order page that should work on mobile and desktop. The test checks that 'order-list' is visible and 'mobile-menu-btn' is only visible on phone form factor.",
+              "when": "probe.runAcrossDevices(['iphone-15-pro', 'desktop-1080p'], async (p) => { const list = p.query('order-list'); assert(list.layout.visible); }) is awaited",
+              "then": "Returns { 'iphone-15-pro': { device: 'iphone-15-pro', passed: true, duration: <ms> }, 'desktop-1080p': { device: 'desktop-1080p', passed: true, duration: <ms> } }. Each device runs sequentially with setDevice() called before the test function.",
+              "api_method": "runAcrossDevices",
+              "error_codes": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

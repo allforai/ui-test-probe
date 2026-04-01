@@ -1,0 +1,429 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "files": [
+    {
+      "path": "spec/probe-types.ts",
+      "module": "M001",
+      "business_intent": "Authoritative type definitions for all probe types, elements, and the UITestProbe interface. Single source of truth imported by TypeScript SDKs.",
+      "implementation_state": "complete",
+      "exports": ["ProbeType", "LinkageEffect", "LinkagePath", "LinkageTarget", "LinkageResult", "ProbeElement", "Platform", "FormFactor", "DeviceProfile", "InputMode", "PlatformContext", "ViewportPreset", "ProbeSnapshot", "SnapshotDiff", "NetworkLogEntry", "TestResult", "ProbeActionError", "ActAndWaitResult", "PageQueryResult", "UITestProbe"],
+      "line_count": 411
+    },
+    {
+      "path": "spec/probe-element.schema.json",
+      "module": "M001",
+      "business_intent": "JSON Schema for the ProbeElement model with 15 attributes, conditional schemas for data-container and media type extensions, and all $defs for sub-objects.",
+      "implementation_state": "complete",
+      "exports": [],
+      "line_count": 368
+    },
+    {
+      "path": "spec/probe-api.schema.json",
+      "module": "M001",
+      "business_intent": "JSON Schema for the ProbeAPI request/response protocol covering all 6 primitives plus hierarchy and platform context methods.",
+      "implementation_state": "complete",
+      "exports": [],
+      "line_count": 271
+    },
+    {
+      "path": "spec/devices.json",
+      "module": "M001",
+      "business_intent": "Built-in device presets (11 devices: iPhone SE/15 Pro, iPad Air/Pro 12, Pixel 8, Galaxy S24/Tab S9/Fold, MacBook Air 13, Desktop 1080p/1440p) for platform matrix testing.",
+      "implementation_state": "complete",
+      "exports": [],
+      "line_count": 94
+    },
+    {
+      "path": "sdk/web/src/probe.ts",
+      "module": "M002",
+      "business_intent": "Main WebProbe class implementing full UITestProbe interface. Composes all 6 collectors, handles lifecycle (construct/destroy), exposes as window.__probe__. Implements hierarchy methods, platform context auto-detection, snapshot/diff, and delegates actions.",
+      "implementation_state": "complete",
+      "exports": ["WebProbeConfig", "WebProbe"],
+      "line_count": 476
+    },
+    {
+      "path": "sdk/web/src/annotations/parser.ts",
+      "module": "M002",
+      "business_intent": "Parses data-probe-* HTML attributes from DOM elements into ProbeElement structures. Handles source shorthand (GET /api/url), linkage JSON arrays, accessibility from ARIA, data fields, session, animation.",
+      "implementation_state": "complete",
+      "exports": ["AnnotationParser"],
+      "line_count": 230
+    },
+    {
+      "path": "sdk/web/src/collector/registry.ts",
+      "module": "M002",
+      "business_intent": "Maintains live registry of ProbeElements keyed by probe ID. Scans DOM via querySelectorAll, registers with layout from getBoundingClientRect, uses MutationObserver for dynamic add/remove of probe elements.",
+      "implementation_state": "complete",
+      "exports": ["ElementRegistry"],
+      "line_count": 198
+    },
+    {
+      "path": "sdk/web/src/collector/state-observer.ts",
+      "module": "M002",
+      "business_intent": "Watches data-probe-state attribute mutations via MutationObserver. Emits state-change events to EventStream. Provides promise-based waitForState() for test synchronization and onStateChange() subscriptions.",
+      "implementation_state": "complete",
+      "exports": ["StateChangeEvent", "StateObserver"],
+      "line_count": 127
+    },
+    {
+      "path": "sdk/web/src/collector/event-stream.ts",
+      "module": "M002",
+      "business_intent": "Central event bus with typed pub/sub (state-change, source-update, layout-change, interaction, network-request). Supports global/type/element-scoped listeners, history buffer, promise-based waitFor() with predicate and timeout.",
+      "implementation_state": "complete",
+      "exports": ["ProbeEventType", "ProbeEvent", "EventStream"],
+      "line_count": 142
+    },
+    {
+      "path": "sdk/web/src/collector/source-tracker.ts",
+      "module": "M002",
+      "business_intent": "Intercepts fetch() and XMLHttpRequest to correlate network requests with data-probe-source annotated elements. Tracks URL, method, status, responseTime. Maintains network log and provides waitForSource().",
+      "implementation_state": "complete",
+      "exports": ["SourceTracker"],
+      "line_count": 190
+    },
+    {
+      "path": "sdk/web/src/collector/layout-tracker.ts",
+      "module": "M002",
+      "business_intent": "Layout metrics via getBoundingClientRect, IntersectionObserver for visibility tracking, PerformanceObserver for render timing. Detects element overlaps by computing bounding rect intersection areas.",
+      "implementation_state": "complete",
+      "exports": ["OverlapEntry", "LayoutTracker"],
+      "line_count": 155
+    },
+    {
+      "path": "sdk/web/src/actions/dispatcher.ts",
+      "module": "M002",
+      "business_intent": "Semantic action dispatch with 5-point pre-checks (exists, visible, enabled, not busy, option exists). Dispatches real DOM events for click/dblclick/contextmenu/hover/focus/type/fill/select/check/scroll/drag/shortcuts/navigate. Implements verifyLinkage() and actAndWait() composite operations.",
+      "implementation_state": "complete",
+      "exports": ["ActionDispatcher"],
+      "line_count": 384
+    },
+    {
+      "path": "sdk/web/src/index.ts",
+      "module": "M002",
+      "business_intent": "Package entry point. Re-exports WebProbe, all collectors, parser, dispatcher, and spec types.",
+      "implementation_state": "complete",
+      "exports": ["WebProbe", "WebProbeConfig", "AnnotationParser", "ElementRegistry", "StateObserver", "SourceTracker", "LayoutTracker", "EventStream", "ActionDispatcher"],
+      "line_count": 45
+    },
+    {
+      "path": "sdk/web/src/browser-entry.ts",
+      "module": "M002",
+      "business_intent": "IIFE bundle entry point for Playwright injection. Creates WebProbe with config from window.__probeConfig__, defers DOM scan until DOMContentLoaded.",
+      "implementation_state": "complete",
+      "exports": [],
+      "line_count": 34
+    },
+    {
+      "path": "sdk/web/build-bundle.mjs",
+      "module": "M002",
+      "business_intent": "esbuild script producing dist/probe-bundle.js IIFE for browser injection.",
+      "implementation_state": "complete",
+      "exports": [],
+      "line_count": 18
+    },
+    {
+      "path": "sdk/flutter/lib/ui_test_probe.dart",
+      "module": "M003",
+      "business_intent": "Flutter library barrel export for all probe types, widget, binding, observers, and dispatcher.",
+      "implementation_state": "complete",
+      "exports": ["probe_types", "probe_widget", "probe_binding", "state_observer", "source_tracker", "action_dispatcher"],
+      "line_count": 12
+    },
+    {
+      "path": "sdk/flutter/lib/src/annotations/probe_types.dart",
+      "module": "M003",
+      "business_intent": "Flutter port of core types: ProbeType (7 values), LinkageEffect (6 values), LinkagePath, DeviceProfile, PlatformContext, ProbeElement (15 fields).",
+      "implementation_state": "complete",
+      "exports": ["ProbeType", "LinkageEffect", "LinkagePath", "DeviceProfile", "PlatformContext", "ProbeElement"],
+      "line_count": 192
+    },
+    {
+      "path": "sdk/flutter/lib/src/annotations/probe_widget.dart",
+      "module": "M003",
+      "business_intent": "ProbeWidget StatelessWidget that wraps child with Semantics metadata (identifier, label, value, hint) encoding probe type and source.",
+      "implementation_state": "complete",
+      "exports": ["ProbeWidget"],
+      "line_count": 68
+    },
+    {
+      "path": "sdk/flutter/lib/src/collector/probe_binding.dart",
+      "module": "M003",
+      "business_intent": "ProbeBinding extends WidgetsFlutterBinding. Scans widget tree for ProbeWidget instances, extracts bounding box from RenderBox, walks ancestor chain for parent ID, provides query/queryAll/waitForState.",
+      "implementation_state": "complete",
+      "exports": ["ProbeBinding", "TimeoutException"],
+      "line_count": 185
+    },
+    {
+      "path": "sdk/flutter/lib/src/collector/state_observer.dart",
+      "module": "M003",
+      "business_intent": "StateObserver using persistent frame callbacks to diff probe state maps. Emits ProbeStateEvent stream with previous/current values. Provides waitForEvent() with timeout.",
+      "implementation_state": "complete",
+      "exports": ["ProbeStateEvent", "StateObserver"],
+      "line_count": 168
+    },
+    {
+      "path": "sdk/flutter/lib/src/collector/source_tracker.dart",
+      "module": "M003",
+      "business_intent": "SourceTracker intercepts Dart HttpClient via HttpOverrides. Wraps all HTTP methods (GET/POST/PUT/DELETE/PATCH/HEAD) with TrackedHttpClient and TrackedHttpClientRequest to capture timing and status. Matches URLs to probe source patterns.",
+      "implementation_state": "complete",
+      "exports": ["TrackedRequest", "SourceTracker"],
+      "line_count": 409
+    },
+    {
+      "path": "sdk/flutter/lib/src/actions/action_dispatcher.dart",
+      "module": "M003",
+      "business_intent": "ActionDispatcher with pre-checks (exists, visible, enabled, type). tap/fill/select delegate actual interaction to WidgetTester. actAndWait polls for state change. verifyLinkage checks all targets exist and are visible.",
+      "implementation_state": "complete",
+      "exports": ["ActionResult", "ActionDispatcher"],
+      "line_count": 152
+    },
+    {
+      "path": "sdk/ios/Sources/UITestProbe/Models/ProbeTypes.swift",
+      "module": "M004",
+      "business_intent": "Swift port of core types: ProbeType (7 cases), LinkageEffect (6 cases), LinkagePath, DeviceProfile, PlatformContext, ProbeElement (15 properties). All Codable and Sendable.",
+      "implementation_state": "complete",
+      "exports": ["ProbeType", "LinkageEffect", "LinkagePath", "DeviceProfile", "PlatformContext", "ProbeElement"],
+      "line_count": 173
+    },
+    {
+      "path": "sdk/ios/Sources/UITestProbe/Annotations/ProbeModifiers.swift",
+      "module": "M004",
+      "business_intent": "SwiftUI ViewModifiers (ProbeIdModifier, ProbeTypeModifier, ProbeStateModifier, ProbeSourceModifier, ProbeLinkageModifier) and View extensions (.probeId(), .probeType(), .probeState(), .probeSource(), .probeLinkage()). Encodes metadata into accessibility properties.",
+      "implementation_state": "complete",
+      "exports": ["ProbeIdModifier", "ProbeTypeModifier", "ProbeStateModifier", "ProbeSourceModifier", "ProbeLinkageModifier"],
+      "line_count": 112
+    },
+    {
+      "path": "sdk/ios/Sources/UITestProbe/Collector/ProbeRegistry.swift",
+      "module": "M004",
+      "business_intent": "Singleton ProbeRegistry scans UIKit view hierarchy (UIWindowScene windows). Parses accessibility hints for type/source/linkage, accessibility values for state, computes bounds/visibility/enabled from UIView properties, maps accessibility traits to role strings, builds PlatformContext.",
+      "implementation_state": "complete",
+      "exports": ["ProbeRegistry"],
+      "line_count": 262
+    },
+    {
+      "path": "sdk/ios/Sources/UITestProbe/Actions/ActionDispatcher.swift",
+      "module": "M004",
+      "business_intent": "ActionDispatcher with pre-checks, tap (UIControl.sendActions or accessibilityActivate), fill (UITextField.insertText / UITextView.text), select (UISegmentedControl/UIPickerView), actAndWait with polling, verifyLinkage with effect-specific verification (navigate/toggle/refresh/submit/filter/overlay).",
+      "implementation_state": "complete",
+      "exports": ["ActionError", "ActionResult", "ActionDispatcher"],
+      "line_count": 366
+    },
+    {
+      "path": "sdk/android/src/main/kotlin/com/allforai/uitestprobe/models/ProbeTypes.kt",
+      "module": "M005",
+      "business_intent": "Kotlin port of core types: ProbeType (7 values), LinkageEffect (6 values), LinkagePath sealed class with Simple/Conditional variants, DeviceProfile, PlatformContext, ProbeElement (15 properties).",
+      "implementation_state": "complete",
+      "exports": ["ProbeType", "LinkageEffect", "LinkagePath", "DeviceProfile", "PlatformContext", "ProbeElement"],
+      "line_count": 133
+    },
+    {
+      "path": "sdk/android/src/main/kotlin/com/allforai/uitestprobe/annotations/ProbeModifiers.kt",
+      "module": "M005",
+      "business_intent": "Custom SemanticsPropertyKeys and Modifier extensions for Compose: probeId, probeType, probeState, probeSource, probeLinkage. Each stores structured data in the semantics tree.",
+      "implementation_state": "complete",
+      "exports": ["ProbeIdKey", "ProbeTypeKey", "ProbeStateKey", "ProbeSourceKey", "ProbeLinkageKey"],
+      "line_count": 84
+    },
+    {
+      "path": "sdk/android/src/main/kotlin/com/allforai/uitestprobe/collector/ProbeRegistry.kt",
+      "module": "M005",
+      "business_intent": "Walks Compose SemanticsNode tree via rootNodeProvider. Extracts probe properties, bounds, accessibility info (ContentDescription, Role, Disabled, Text), computes visibility from isPlaced. Singleton + instance pattern.",
+      "implementation_state": "complete",
+      "exports": ["ProbeRegistry"],
+      "line_count": 138
+    },
+    {
+      "path": "sdk/android/src/main/kotlin/com/allforai/uitestprobe/actions/ActionDispatcher.kt",
+      "module": "M005",
+      "business_intent": "ActionDispatcher using ActionPerformer interface for platform actions. Pre-check with type validation. tap/fill/select via performer. actAndWait with coroutine withTimeoutOrNull. verifyLinkage compares before/after snapshots per effect type.",
+      "implementation_state": "complete",
+      "exports": ["ActionResult", "ActionPerformer", "ActionDispatcher"],
+      "line_count": 311
+    },
+    {
+      "path": "sdk/windows-core/Models/ProbeTypes.cs",
+      "module": "M006",
+      "business_intent": "C# record types matching the spec's 9-type ProbeType enum. Complete ProbeElement with all 15 attributes. Full sub-record hierarchy: StateInfo, DataInfo, SourceInfo, LinkageInfo/Target, 6 LinkagePath variants (DirectPath, ApiPath, etc.), LayoutInfo, ShortcutInfo, AnimationInfo, LocaleInfo, ThemeInfo, SessionInfo, PlatformContext, DeviceProfile.",
+      "implementation_state": "complete",
+      "exports": ["ProbeType", "LinkageEffect", "ProbeElement", "StateInfo", "DataInfo", "SourceInfo", "LinkageInfo", "LinkageTarget", "LinkagePath", "DirectPath", "ApiPath", "ComputedPath", "StorePath", "NavigationPath", "ChainPath", "LayoutInfo", "PlatformContext", "DeviceProfile", "Platform", "InputMode"],
+      "line_count": 262
+    },
+    {
+      "path": "sdk/windows-core/Collector/IProbeRegistry.cs",
+      "module": "M006",
+      "business_intent": "Platform-agnostic interface for probe registries: Scan, Query, QueryAll, QueryPage, QueryChildren, QueryDescendants, IsEffectivelyVisible. PageSummary record.",
+      "implementation_state": "complete",
+      "exports": ["IProbeRegistry", "PageSummary"],
+      "line_count": 43
+    },
+    {
+      "path": "sdk/windows-core/Collector/AnnotationParser.cs",
+      "module": "M006",
+      "business_intent": "Shared parsing logic for annotation strings: ParseProbeType, ParseSource (method+url), ParseLinkage (pipe-delimited targets with path types), ParseLinkagePath, ParseChildren.",
+      "implementation_state": "complete",
+      "exports": ["AnnotationParser"],
+      "line_count": 80
+    },
+    {
+      "path": "sdk/windows-core/Actions/ActionDispatcherBase.cs",
+      "module": "M006",
+      "business_intent": "Abstract base for action dispatchers. PreFlightCheck (exists, visible, enabled, not busy). ActAndWait parses action string, dispatches, polls for state. VerifyLinkage tracks direct/chained/API effects with timing. ProbeActionException.",
+      "implementation_state": "complete",
+      "exports": ["ActionDispatcherBase", "ActAndWaitResult", "LinkageResult", "DirectEffect", "ChainedEffect", "ApiCall", "ProbeActionException"],
+      "line_count": 229
+    },
+    {
+      "path": "sdk/windows-wpf/Collector/WpfProbeRegistry.cs",
+      "module": "M006a",
+      "business_intent": "WPF IProbeRegistry implementation. Walks VisualTreeHelper, reads Probe DependencyProperties, computes layout from UIElement.RenderSize, refresh-on-query pattern, wildcard children matching, ancestor-walk visibility check.",
+      "implementation_state": "complete",
+      "exports": ["WpfProbeRegistry"],
+      "line_count": 224
+    },
+    {
+      "path": "sdk/windows-winform/Collector/WinFormProbeRegistry.cs",
+      "module": "M006b",
+      "business_intent": "WinForms IProbeRegistry implementation. Discovers controls from ProbeExtenderProvider, walks Control tree for parent assignment, refresh-on-query, wildcard children, parent-walk visibility.",
+      "implementation_state": "complete",
+      "exports": ["WinFormProbeRegistry"],
+      "line_count": 219
+    },
+    {
+      "path": "sdk/windows-winui/Collector/MauiProbeRegistry.cs",
+      "module": "M006c",
+      "business_intent": "MAUI/WinUI IProbeRegistry implementation. Walks Layout/ContentView/ContentPage/ScrollView trees, reads Probe BindableProperties, same refresh/wildcard/visibility patterns.",
+      "implementation_state": "complete",
+      "exports": ["MauiProbeRegistry"],
+      "line_count": 165
+    },
+    {
+      "path": "sdk/react-native/src/probe.ts",
+      "module": "M007",
+      "business_intent": "RNProbe main class implementing UITestProbe interface for React Native. Inline type definitions matching spec. Composes ElementRegistry, SourceTracker, ActionDispatcher. All 6 primitives + hierarchy + platform context with device presets.",
+      "implementation_state": "complete",
+      "exports": ["RNProbe", "ProbeType", "LinkageEffect", "StateInfo", "SourceInfo", "LayoutInfo", "LinkagePath", "ProbeElement", "PlatformContext", "DeviceProfile", "LinkageResult", "TestResult"],
+      "line_count": 398
+    },
+    {
+      "path": "sdk/react-native/src/annotations/probe-props.ts",
+      "module": "M007",
+      "business_intent": "useProbe() React hook serializing probe metadata into testID + accessibilityLabel + accessibilityHint. withProbe() HOC for class components. ProbeProps and NativeProbeProps interfaces.",
+      "implementation_state": "complete",
+      "exports": ["ProbeProps", "NativeProbeProps", "useProbe", "withProbe"],
+      "line_count": 122
+    },
+    {
+      "path": "sdk/react-native/src/collector/registry.ts",
+      "module": "M007",
+      "business_intent": "Self-registration element registry for React Native. Components register via useProbe hook side-effect. query, queryAll, queryPage, queryChildren, queryDescendants, isEffectivelyVisible.",
+      "implementation_state": "complete",
+      "exports": ["ElementRegistry"],
+      "line_count": 129
+    },
+    {
+      "path": "sdk/react-native/src/collector/source-tracker.ts",
+      "module": "M007",
+      "business_intent": "Network interceptor patching fetch/XHR. Source URL binding registration. Event-driven waitForRequest with URL pattern matching. Full network log with element correlation.",
+      "implementation_state": "complete",
+      "exports": ["NetworkEntry", "SourceTracker"],
+      "line_count": 250
+    },
+    {
+      "path": "sdk/react-native/src/actions/dispatcher.ts",
+      "module": "M007",
+      "business_intent": "Action dispatcher for RN with pre-flight checks, tap/type/fill/select/scrollTo. State change listeners. actAndWait and verifyLinkage with timeout-based waiting.",
+      "implementation_state": "complete",
+      "exports": ["ActAndWaitResult", "ProbeActionError", "ActionDispatcher"],
+      "line_count": 330
+    },
+    {
+      "path": "integrations/playwright/src/inject.ts",
+      "module": "M008",
+      "business_intent": "Loads pre-built IIFE bundle from sdk/web/dist/probe-bundle.js and injects via page.addInitScript(). Configurable autoScan and interceptNetwork options.",
+      "implementation_state": "complete",
+      "exports": ["injectProbe"],
+      "line_count": 88
+    },
+    {
+      "path": "integrations/playwright/src/probe-page.ts",
+      "module": "M008",
+      "business_intent": "ProbePage wrapper providing typed async methods for all UITestProbe operations via page.evaluate(). Covers all 6 primitives, hierarchy, composite operations (snapshot, diff, verifyLinkage, actAndWait).",
+      "implementation_state": "complete",
+      "exports": ["ProbePage"],
+      "line_count": 349
+    },
+    {
+      "path": "integrations/playwright/src/matchers.ts",
+      "module": "M008",
+      "business_intent": "Custom Playwright expect matchers: toHaveProbeState (with retry timeout loop), toHaveProbeData (deep partial field matching), toBeEffectivelyVisible (ancestor chain check).",
+      "implementation_state": "complete",
+      "exports": ["toHaveProbeState", "toHaveProbeData", "toBeEffectivelyVisible"],
+      "line_count": 135
+    },
+    {
+      "path": "integrations/flutter-test/lib/src/probe_tester.dart",
+      "module": "M009",
+      "business_intent": "ProbeTester extension on WidgetTester. query/queryAll, waitForPageReady (pumpAndSettle + state stability), actAndWait (tap finder then poll), setDevice (surface size + pixel ratio), runAcrossDevices.",
+      "implementation_state": "complete",
+      "exports": ["ProbeTesterExtension", "ProbeTester"],
+      "line_count": 186
+    },
+    {
+      "path": "integrations/xctest/Sources/UITestProbeXCTest/ProbeXCTest.swift",
+      "module": "M010",
+      "business_intent": "XCTest integration wrapping XCUIApplication. query via accessibility identifier + hint parsing, waitForPageReady polling, actAndWait tap+poll, setDevice. Extension on XCUIApplication for .probe accessor.",
+      "implementation_state": "complete",
+      "exports": ["ProbeXCTestError", "ProbeXCTest"],
+      "line_count": 216
+    },
+    {
+      "path": "integrations/compose-test/src/main/kotlin/com/allforai/uitestprobe/test/ProbeTestRule.kt",
+      "module": "M011",
+      "business_intent": "Compose test integration. ProbeTestRule wraps ComposeTestRule, wires rootNodeProvider to semantics root, provides ActionPerformer bridge. query/queryAll, waitForPageReady, actAndWait, setDevice, runAcrossDevices. hasProbeId() SemanticsMatcher.",
+      "implementation_state": "complete",
+      "exports": ["hasProbeId", "ProbeTestRule"],
+      "line_count": 184
+    },
+    {
+      "path": "integrations/detox/src/probe-device.ts",
+      "module": "M013",
+      "business_intent": "Detox integration. ProbeDevice wraps Detox device APIs. Parses accessibilityHint JSON for probe metadata. query/queryAll, waitForPageReady, waitForState, actAndWait, verifyLinkage, isEffectivelyVisible, setDevice, runAcrossDevices, getSource.",
+      "implementation_state": "complete",
+      "exports": ["ActAndWaitOptions", "ProbeDevice", "createProbeDevice"],
+      "line_count": 501
+    },
+    {
+      "path": "tools/cli/src/index.ts",
+      "module": "M014",
+      "business_intent": "CLI entry point using Commander.js. Registers 3 subcommands (instrument, validate, report) with options for framework, dir, patterns, dry-run, strict mode, output format.",
+      "implementation_state": "complete",
+      "exports": [],
+      "line_count": 57
+    },
+    {
+      "path": "tools/cli/src/commands/instrument.ts",
+      "module": "M014",
+      "business_intent": "Scans source files across 8 frameworks, identifies key UI controls (per-framework control sets), adds probe annotations (data-probe-*, ProbeWidget wrappers, .probeId() modifiers, XAML attached properties). 3 ID strategies: semantic, path, counter. Supports dry-run.",
+      "implementation_state": "complete",
+      "exports": ["instrumentCommand"],
+      "line_count": 488
+    },
+    {
+      "path": "tools/cli/src/commands/validate.ts",
+      "module": "M014",
+      "business_intent": "Validates probe annotations: duplicate IDs, missing type, invalid type, missing source on data-container, missing state on interactive elements, orphan linkage targets, circular linkage detection (DFS), unreachable elements (no parent path to page root).",
+      "implementation_state": "complete",
+      "exports": ["validateCommand"],
+      "line_count": 472
+    },
+    {
+      "path": "tools/cli/src/commands/report.ts",
+      "module": "M014",
+      "business_intent": "Generates coverage reports in text/JSON/HTML. Scans files for controls and annotations, computes per-page and per-type coverage percentages, identifies missing annotations. HTML report includes styled dashboard with coverage bars.",
+      "implementation_state": "complete",
+      "exports": ["reportCommand"],
+      "line_count": 571
+    }
+  ]
+}

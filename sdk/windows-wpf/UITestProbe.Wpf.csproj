@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>UITestProbe.Wpf</RootNamespace>
+    <PackageId>AllForAI.UITestProbe.Wpf</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>AllForAI</Authors>
+    <Description>UI Test Probe SDK for WPF — observable UI testing with DependencyProperty annotations</Description>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../windows-core/UITestProbe.Core.csproj" />
+  </ItemGroup>
+</Project>

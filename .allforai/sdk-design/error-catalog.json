@@ -1,0 +1,214 @@
+{
+  "generated_at": "2026-04-01T00:00:00.000Z",
+  "source_files_read": [
+    "spec/probe-types.ts",
+    "sdk/web/src/actions/dispatcher.ts",
+    "sdk/web/src/collector/state-observer.ts",
+    "sdk/web/src/probe.ts",
+    "integrations/playwright/src/matchers.ts"
+  ],
+
+  "action_errors": {
+    "type_name": "ProbeActionError",
+    "source": "spec/probe-types.ts",
+    "definition": "{ error: 'NOT_FOUND' | 'NOT_VISIBLE' | 'DISABLED' | 'BUSY' | 'OPTION_NOT_FOUND'; id: string; reason?: string; available?: string[] }",
+    "throw_mechanism": "Thrown as plain objects (not Error instances) using TypeScript satisfies pattern: 'throw { error: \"NOT_FOUND\", id } satisfies ProbeActionError'",
+    "where_thrown": "sdk/web/src/actions/dispatcher.ts — preCheck() private method + select() method",
+    "pre_check_execution_order": [
+      "1. NOT_FOUND — element must be in registry",
+      "2. NOT_VISIBLE — layout.visible must be true",
+      "3. DISABLED — state.current must not be 'disabled'",
+      "4. BUSY — state.current must not be 'loading' or 'submitting'",
+      "5. OPTION_NOT_FOUND — (select() only) value must be in data.options if options are declared"
+    ],
+    "errors": [
+      {
+        "code": "NOT_FOUND",
+        "description": "The element with the given probe ID is not registered in the element registry.",
+        "trigger_condition": "registry.query(id) returns null",
+        "fields": {
+          "error": "\"NOT_FOUND\"",
+          "id": "the probe ID that was not found",
+          "reason": "not set",
+          "available": "not set"
+        },
+        "thrown_by_methods": [
+          "click", "doubleClick", "rightClick", "hover", "focus",
+          "type", "fill", "clear", "select", "check",
+          "scrollTo", "scrollToBottom", "scrollIntoView",
+          "drag (checks both sourceId and targetId)",
+          "getDOMElement() — internal helper"
+        ],
+        "code_location": "sdk/web/src/actions/dispatcher.ts line 43: 'if (!el) throw { error: \"NOT_FOUND\", id } satisfies ProbeActionError' and line 367: 'if (!element) throw { error: \"NOT_FOUND\", id }'",
+        "resolution": "Verify the element has data-probe-id annotation matching the ID used in the test. Run probe.query(id) to confirm. Check that the element is in the DOM when the action is attempted."
+      },
+      {
+        "code": "NOT_VISIBLE",
+        "description": "The element is registered but its layout.visible flag is false — it is hidden from the viewport.",
+        "trigger_condition": "element.layout.visible === false",
+        "fields": {
+          "error": "\"NOT_VISIBLE\"",
+          "id": "the probe ID of the hidden element",
+          "reason": "not set",
+          "available": "not set"
+        },
+        "thrown_by_methods": [
+          "click", "doubleClick", "rightClick", "hover", "focus",
+          "type", "fill", "clear", "select", "check",
+          "scrollTo", "scrollToBottom", "scrollIntoView", "drag"
+        ],
+        "code_location": "sdk/web/src/actions/dispatcher.ts line 370: 'if (!element.layout.visible) throw { error: \"NOT_VISIBLE\", id }'",
+        "resolution": "Use isEffectivelyVisible(id) to check the full ancestor chain. If a parent container is hidden, the element will be NOT_VISIBLE even if its own visible flag were true. Use waitForState() to wait for the containing element to become visible first.",
+        "note": "layout.visible is set by the LayoutTracker via IntersectionObserver (web) or equivalent platform visibility APIs. This is geometric visibility, not CSS display or opacity."
+      },
+      {
+        "code": "DISABLED",
+        "description": "The element is in 'disabled' state and cannot accept interactions.",
+        "trigger_condition": "element.state.current === 'disabled'",
+        "fields": {
+          "error": "\"DISABLED\"",
+          "id": "the probe ID of the disabled element",
+          "reason": "optional — validation error messages if state.validationErrors are set (joined as 'field: message; ...')",
+          "available": "not set"
+        },
+        "thrown_by_methods": [
+          "click", "doubleClick", "rightClick", "hover", "focus",
+          "type", "fill", "clear", "select", "check",
+          "scrollTo", "scrollToBottom", "scrollIntoView", "drag"
+        ],
+        "code_location": "sdk/web/src/actions/dispatcher.ts lines 373-377: 'if (element.state.current === \"disabled\") { const reason = element.state.validationErrors?.map(e => `${e.field}: ${e.message}`).join(\"; \"); throw { error: \"DISABLED\", id, reason }; }'",
+        "resolution": "Check what condition drives the disabled state. If ENABLED_TOGGLE linkage is involved, a prerequisite element may need to be interacted with first. Use getState(id) to inspect the current state and validationErrors."
+      },
+      {
+        "code": "BUSY",
+        "description": "The element is in 'loading' or 'submitting' state and is not ready for interaction.",
+        "trigger_condition": "element.state.current === 'loading' OR element.state.current === 'submitting'",
+        "fields": {
+          "error": "\"BUSY\"",
+          "id": "the probe ID of the busy element",
+          "reason": "'Element is loading' or 'Element is submitting'",
+          "available": "not set"
+        },
+        "thrown_by_methods": [
+          "click", "doubleClick", "rightClick", "hover", "focus",
+          "type", "fill", "clear", "select", "check",
+          "scrollTo", "scrollToBottom", "scrollIntoView", "drag"
+        ],
+        "code_location": "sdk/web/src/actions/dispatcher.ts lines 379-381: 'if (element.state.current === \"loading\" || element.state.current === \"submitting\") throw { error: \"BUSY\", id, reason: `Element is ${element.state.current}` }'",
+        "resolution": "Call waitForState(id, 'loaded') or waitForPageReady() before the action to ensure the element is ready. For form submission, wait for state to leave 'submitting' before re-interacting."
+      },
+      {
+        "code": "OPTION_NOT_FOUND",
+        "description": "The select() action was called with a value that is not in the element's declared options list.",
+        "trigger_condition": "element.data?.options is set AND value is not in element.data.options",
+        "fields": {
+          "error": "\"OPTION_NOT_FOUND\"",
+          "id": "the probe ID of the selector element",
+          "reason": "not set",
+          "available": "element.data.options — array of valid option strings"
+        },
+        "thrown_by_methods": ["select"],
+        "code_location": "sdk/web/src/actions/dispatcher.ts lines 122-128: 'if (element.data?.options && !element.data.options.includes(value)) throw { error: \"OPTION_NOT_FOUND\", id, available: element.data.options }'",
+        "note": "Only thrown when data.options is explicitly declared. If no options are declared, the select proceeds without this check.",
+        "resolution": "Check the available[] array in the error object for valid options. If options are dynamic (loaded from API), call waitForSource(id) before select() to ensure options are populated."
+      }
+    ]
+  },
+
+  "timeout_errors": {
+    "description": "Timeout errors are thrown as Error instances (not ProbeActionError) when promise-based wait operations exceed their timeout.",
+    "errors": [
+      {
+        "method": "waitForState",
+        "timeout_default_ms": 10000,
+        "error_type": "Error (standard JS Error)",
+        "message_format": "waitForState('{id}', '{state}') timed out after {timeout}ms",
+        "code_location": "sdk/web/src/collector/state-observer.ts line 97: 'reject(new Error(`waitForState(\\'${id}\\', \\'${state}\\') timed out after ${timeout}ms`))'",
+        "resolution": "Check that the element's state annotation is being updated by the application. Verify the state string matches exactly (case-sensitive). Increase timeout if network is slow."
+      },
+      {
+        "method": "waitForPageReady",
+        "timeout_default_ms": 30000,
+        "error_type": "Error (standard JS Error)",
+        "message_format": "waitForPageReady timed out. Still loading: {comma-separated element IDs}",
+        "code_location": "sdk/web/src/probe.ts lines 297-298 and 319: includes the IDs of still-loading elements",
+        "resolution": "The error message includes which elements are still loading. Investigate why those elements haven't reached a terminal state. Verify the PAGE element or individual elements update their data-probe-state attribute."
+      },
+      {
+        "method": "verifyLinkage",
+        "timeout_default_ms": 5000,
+        "error_type": "Captured as timeout result in LinkageResult (not thrown)",
+        "result_field": "directEffects[].result === 'timeout' or chainedEffects[].result === 'timeout'",
+        "code_location": "sdk/web/src/actions/dispatcher.ts line 277: 'result: \"timeout\"' in the catch block",
+        "resolution": "A timeout result means the linked target element did not emit a state-change event within 5 seconds. Verify the data flow is actually wired up and the target element has a probe annotation."
+      },
+      {
+        "method": "actAndWait",
+        "timeout_default_ms": 10000,
+        "error_type": "Propagates from waitForState — Error instance",
+        "code_location": "sdk/web/src/actions/dispatcher.ts line 328: 'await this.stateObserver.waitForState(waitFor.target, waitFor.state, timeout)'",
+        "resolution": "Same resolution as waitForState."
+      }
+    ]
+  },
+
+  "other_errors": [
+    {
+      "method": "getState",
+      "condition": "element not found",
+      "error_type": "Error (standard JS Error, NOT ProbeActionError)",
+      "message_format": "Element not found: {id}",
+      "code_location": "sdk/web/src/probe.ts line 267: 'if (!el) throw new Error(`Element not found: ${id}`)'",
+      "note": "Unlike action methods which throw ProbeActionError, getState throws a plain Error. This is an inconsistency between State Exposure and Action Dispatch error handling."
+    },
+    {
+      "method": "setDevice",
+      "condition": "unknown preset name",
+      "error_type": "Error (standard JS Error)",
+      "message_format": "Unknown device preset: {preset}. Available: {comma-separated list}",
+      "code_location": "sdk/web/src/probe.ts line 179"
+    },
+    {
+      "method": "actAndWait",
+      "condition": "unknown action string (no matching method)",
+      "error_type": "Error (standard JS Error)",
+      "message_format": "Unknown action: {actionName}",
+      "code_location": "sdk/web/src/actions/dispatcher.ts line 321"
+    }
+  ],
+
+  "pre_check_pattern": {
+    "description": "The pre-check pattern is the core safety mechanism of Action Dispatch. It is implemented as a private preCheck() method that returns the validated ProbeElement for further use.",
+    "pattern_code": "private preCheck(id: string): ProbeElement { const element = this.registry.query(id); if (!element) throw { error: 'NOT_FOUND', id }; if (!element.layout.visible) throw { error: 'NOT_VISIBLE', id }; if (element.state.current === 'disabled') throw { error: 'DISABLED', id, reason }; if (element.state.current === 'loading' || element.state.current === 'submitting') throw { error: 'BUSY', id, reason }; return element; }",
+    "source": "sdk/web/src/actions/dispatcher.ts lines 365-383",
+    "usage": "Every action method except pressShortcut() and navigate() calls preCheck(id) as its first statement. select() uses the returned element to check options.",
+    "exceptions_to_pattern": [
+      "pressShortcut() — dispatched to document, not an element; no element pre-checks",
+      "navigate() — operates on window.history, not an element; no element pre-checks",
+      "drag() — calls preCheck() on BOTH sourceId and targetId before proceeding"
+    ]
+  },
+
+  "custom_matchers": {
+    "description": "The Playwright integration provides 3 custom expect matchers that build on top of the error model.",
+    "source": "integrations/playwright/src/matchers.ts",
+    "matchers": [
+      {
+        "name": "toHaveProbeState",
+        "usage": "await expect(page).toHaveProbeState('element-id', 'loaded')",
+        "behavior": "Retries probe.getState() in a timeout loop (not event-driven). Passes when state.current matches. Fails with message showing actual vs expected state.",
+        "timeout": "configurable, default from Playwright expect timeout"
+      },
+      {
+        "name": "toHaveProbeData",
+        "usage": "await expect(page).toHaveProbeData('element-id', { rows: 5 })",
+        "behavior": "Deep partial match of the element's data field. Passes if all provided fields match (extra fields in actual are ignored)."
+      },
+      {
+        "name": "toBeEffectivelyVisible",
+        "usage": "await expect(page).toBeEffectivelyVisible('element-id')",
+        "behavior": "Calls isEffectivelyVisible(id) which walks the ancestor chain. Fails if any ancestor has visible=false."
+      }
+    ]
+  }
+}
