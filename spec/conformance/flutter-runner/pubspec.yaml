@@ -1,0 +1,19 @@
+name: probe_conformance_flutter
+description: Flutter conformance test runner for ui-test-probe
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  ui_test_probe:
+    path: ../../../sdk/flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  ui_test_probe_flutter_test:
+    path: ../../../integrations/flutter-test
