@@ -22,7 +22,7 @@ export default function OrderPage() {
   return (
     // Page-level container -- probe hierarchy root
     <div
-      data-probe-id="order-page"
+      data-probe-id="order-management-page"
       data-probe-type="page"
       data-probe-state="loaded"
       data-probe-children='["status-filter","order-table","order-paginator","create-order-btn"]'
@@ -34,7 +34,7 @@ export default function OrderPage() {
         data-probe-id="status-filter"
         data-probe-type="selector"
         data-probe-state="idle"
-        data-probe-parent="order-page"
+        data-probe-parent="order-management-page"
         data-probe-options='["all","pending","completed","cancelled"]'
         data-probe-linkage='{
           "targets": [{
@@ -57,7 +57,7 @@ export default function OrderPage() {
         data-probe-id="order-table"
         data-probe-type="data-container"
         data-probe-state={orders.length ? 'loaded' : 'empty'}
-        data-probe-parent="order-page"
+        data-probe-parent="order-management-page"
         data-probe-rows={orders.length}
         data-probe-columns='[
           {"id":"id","label":"Order ID","visible":true},
@@ -88,7 +88,7 @@ export default function OrderPage() {
         data-probe-id="order-paginator"
         data-probe-type="navigation"
         data-probe-state="idle"
-        data-probe-parent="order-page"
+        data-probe-parent="order-management-page"
         data-probe-value={page}
         data-probe-linkage='{
           "targets": [{
@@ -108,7 +108,7 @@ export default function OrderPage() {
         data-probe-id="create-order-btn"
         data-probe-type="action"
         data-probe-state="idle"
-        data-probe-parent="order-page"
+        data-probe-parent="order-management-page"
         data-probe-shortcuts='[{"key":"Ctrl+N","action":"open-create-modal"}]'
         data-probe-linkage='{
           "targets": [{

@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "name": "Order Management",
+  "description": "Standard example app that all platforms must implement. Each element listed here must be discoverable via the platform's probe SDK.",
+  "elements": [
+    { "id": "order-management-page", "type": "page", "required_states": ["loading", "loaded"] },
+    { "id": "order-table", "type": "data-container", "source": "GET /api/orders", "required_states": ["loading", "loaded"] },
+    { "id": "status-filter", "type": "selector", "linkage_to": [{ "target": "order-table", "effect": "data_reload" }] },
+    { "id": "order-paginator", "type": "navigation", "linkage_to": [{ "target": "order-table", "effect": "data_reload" }] },
+    { "id": "create-order-btn", "type": "action" },
+    { "id": "create-order-modal", "type": "modal", "required_states": ["loaded"] },
+    { "id": "customer-input", "type": "form", "parent": "create-order-modal" },
+    { "id": "amount-input", "type": "form", "parent": "create-order-modal" }
+  ]
+}
