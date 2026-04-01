@@ -1,0 +1,37 @@
+{
+  "category": "Scenario: Filter Triggers Reload",
+  "vectors": [
+    {
+      "id": "SCENE-001",
+      "name": "status filter selection reloads order table",
+      "precondition": "waitForPageReady",
+      "steps": [
+        { "action": "snapshot", "save_as": "before" },
+        { "action": "select", "args": ["status-filter", "completed"] },
+        { "action": "waitForState", "args": ["order-table", "loaded"], "timeout_ms": 5000 },
+        { "action": "snapshot", "save_as": "after" },
+        { "assert": "snapshots_differ", "args": ["before", "after"], "expect": { "is_true": true } }
+      ]
+    },
+    {
+      "id": "SCENE-002",
+      "name": "filter linkage verification passes",
+      "precondition": "waitForPageReady",
+      "steps": [
+        { "action": "select", "args": ["status-filter", "completed"] },
+        { "action": "waitForState", "args": ["order-table", "loaded"], "timeout_ms": 5000 },
+        { "assert": "verifyLinkage", "args": ["status-filter", "select:completed"], "expect": { "fields": { "directEffects.length": { "gte": 1 } } } }
+      ]
+    },
+    {
+      "id": "SCENE-003",
+      "name": "table source binding present after reload",
+      "precondition": "waitForPageReady",
+      "steps": [
+        { "action": "select", "args": ["status-filter", "completed"] },
+        { "action": "waitForState", "args": ["order-table", "loaded"], "timeout_ms": 5000 },
+        { "assert": "query", "args": ["order-table"], "expect": { "fields": { "source": { "contains": "/api/orders" } } } }
+      ]
+    }
+  ]
+}

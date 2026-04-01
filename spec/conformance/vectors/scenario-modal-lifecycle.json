@@ -1,0 +1,37 @@
+{
+  "category": "Scenario: Modal Lifecycle",
+  "vectors": [
+    {
+      "id": "SCENE-004",
+      "name": "clicking create button opens modal",
+      "precondition": "waitForPageReady",
+      "steps": [
+        { "action": "click", "args": ["create-order-btn"] },
+        { "action": "waitForState", "args": ["create-order-modal", "loaded"], "timeout_ms": 3000 },
+        { "assert": "query", "args": ["create-order-modal"], "expect": { "not_null": true, "fields": { "type": "modal" } } }
+      ]
+    },
+    {
+      "id": "SCENE-005",
+      "name": "form inputs discoverable inside modal",
+      "precondition": "waitForPageReady",
+      "steps": [
+        { "action": "click", "args": ["create-order-btn"] },
+        { "action": "waitForState", "args": ["create-order-modal", "loaded"], "timeout_ms": 3000 },
+        { "assert": "query", "args": ["customer-input"], "expect": { "not_null": true, "fields": { "type": "form" } } },
+        { "assert": "query", "args": ["amount-input"], "expect": { "not_null": true, "fields": { "type": "form" } } }
+      ]
+    },
+    {
+      "id": "SCENE-006",
+      "name": "can fill form fields in modal",
+      "precondition": "waitForPageReady",
+      "steps": [
+        { "action": "click", "args": ["create-order-btn"] },
+        { "action": "waitForState", "args": ["create-order-modal", "loaded"], "timeout_ms": 3000 },
+        { "action": "fill", "args": ["customer-input", "Acme Corp"] },
+        { "action": "fill", "args": ["amount-input", "1500"] }
+      ]
+    }
+  ]
+}
