@@ -1,0 +1,41 @@
+{
+  "category": "state",
+  "vectors": [
+    {
+      "id": "STATE-001",
+      "name": "order-table data-container has state.current loaded",
+      "action": { "method": "query", "args": ["order-table"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "state.current": "loaded" }
+      }
+    },
+    {
+      "id": "STATE-002",
+      "name": "order-management-page has state.current loaded",
+      "action": { "method": "query", "args": ["order-management-page"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "state.current": "loaded" }
+      }
+    },
+    {
+      "id": "STATE-003",
+      "name": "status-filter selector has state.current loaded",
+      "action": { "method": "query", "args": ["status-filter"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "state.current": "loaded" }
+      }
+    },
+    {
+      "id": "STATE-004",
+      "name": "create-order-btn action element exists and is registered",
+      "action": { "method": "query", "args": ["create-order-btn"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "id": "create-order-btn", "type": "action" }
+      }
+    }
+  ]
+}

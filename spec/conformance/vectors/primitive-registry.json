@@ -1,0 +1,76 @@
+{
+  "category": "registry",
+  "vectors": [
+    {
+      "id": "REG-001",
+      "name": "query existing element returns element with correct id and type",
+      "action": { "method": "query", "args": ["order-table"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "id": "order-table", "type": "data-container" }
+      }
+    },
+    {
+      "id": "REG-002",
+      "name": "query non-existent element returns null",
+      "action": { "method": "query", "args": ["does-not-exist"] },
+      "expect": {
+        "is_null": true
+      }
+    },
+    {
+      "id": "REG-003",
+      "name": "queryAll returns all registered elements",
+      "action": { "method": "queryAll", "args": [] },
+      "expect": {
+        "not_null": true,
+        "has_length": { "gte": 8 }
+      }
+    },
+    {
+      "id": "REG-004",
+      "name": "queryAll with type filter returns only matching elements",
+      "action": { "method": "queryAll", "args": ["form"] },
+      "expect": {
+        "not_null": true,
+        "has_length": { "gte": 2 }
+      }
+    },
+    {
+      "id": "REG-005",
+      "name": "queryPage returns page summary with element count",
+      "action": { "method": "queryPage", "args": [] },
+      "expect": {
+        "not_null": true,
+        "fields": { "elementCount": { "gte": 8 } }
+      }
+    },
+    {
+      "id": "REG-006",
+      "name": "page element has type page",
+      "action": { "method": "query", "args": ["order-management-page"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "id": "order-management-page", "type": "page" }
+      }
+    },
+    {
+      "id": "REG-007",
+      "name": "modal element has type modal",
+      "action": { "method": "query", "args": ["create-order-modal"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "id": "create-order-modal", "type": "modal" }
+      }
+    },
+    {
+      "id": "REG-008",
+      "name": "form element has type form",
+      "action": { "method": "query", "args": ["customer-input"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "id": "customer-input", "type": "form" }
+      }
+    }
+  ]
+}

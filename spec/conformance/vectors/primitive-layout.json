@@ -1,0 +1,48 @@
+{
+  "category": "layout",
+  "vectors": [
+    {
+      "id": "LAY-001",
+      "name": "order-table has layout visible true and positive dimensions",
+      "action": { "method": "query", "args": ["order-table"] },
+      "expect": {
+        "not_null": true,
+        "fields": {
+          "layout.visible": true,
+          "layout.width": { "gt": 0 },
+          "layout.height": { "gt": 0 }
+        }
+      }
+    },
+    {
+      "id": "LAY-002",
+      "name": "order-management-page is visible",
+      "action": { "method": "query", "args": ["order-management-page"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "layout.visible": true }
+      }
+    },
+    {
+      "id": "LAY-003",
+      "name": "status-filter selector has positive width",
+      "action": { "method": "query", "args": ["status-filter"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "layout.width": { "gt": 0 } }
+      }
+    },
+    {
+      "id": "LAY-004",
+      "name": "create-order-btn button has layout visible true and positive width",
+      "action": { "method": "query", "args": ["create-order-btn"] },
+      "expect": {
+        "not_null": true,
+        "fields": {
+          "layout.visible": true,
+          "layout.width": { "gt": 0 }
+        }
+      }
+    }
+  ]
+}

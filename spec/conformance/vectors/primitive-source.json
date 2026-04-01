@@ -1,0 +1,38 @@
+{
+  "category": "source",
+  "vectors": [
+    {
+      "id": "SRC-001",
+      "name": "order-table source url contains /api/orders",
+      "action": { "method": "query", "args": ["order-table"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "source.url": { "contains": "/api/orders" } }
+      }
+    },
+    {
+      "id": "SRC-002",
+      "name": "status-filter element exists",
+      "action": { "method": "query", "args": ["status-filter"] },
+      "expect": {
+        "not_null": true
+      }
+    },
+    {
+      "id": "SRC-003",
+      "name": "create-order-btn element exists",
+      "action": { "method": "query", "args": ["create-order-btn"] },
+      "expect": {
+        "not_null": true
+      }
+    },
+    {
+      "id": "SRC-004",
+      "name": "customer-input element exists",
+      "action": { "method": "query", "args": ["customer-input"] },
+      "expect": {
+        "not_null": true
+      }
+    }
+  ]
+}

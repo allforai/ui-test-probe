@@ -1,0 +1,113 @@
+{
+  "category": "actions",
+  "vectors": [
+    {
+      "id": "ACT-001",
+      "name": "click create-order-btn succeeds and returns result",
+      "action": { "method": "dispatch", "args": ["create-order-btn", "click"] },
+      "expect": {
+        "not_null": true
+      }
+    },
+    {
+      "id": "ACT-002",
+      "name": "click non-existent element fails with NOT_FOUND error",
+      "action": { "method": "dispatch", "args": ["does-not-exist", "click"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "error": "NOT_FOUND" }
+      }
+    },
+    {
+      "id": "ACT-003",
+      "name": "select completed on status-filter succeeds",
+      "action": { "method": "dispatch", "args": ["status-filter", "select", "completed"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "success": true }
+      }
+    },
+    {
+      "id": "ACT-004",
+      "name": "select invalid option on status-filter fails with OPTION_NOT_FOUND",
+      "action": { "method": "dispatch", "args": ["status-filter", "select", "__invalid_option_xyz__"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "error": "OPTION_NOT_FOUND" }
+      }
+    },
+    {
+      "id": "ACT-005",
+      "name": "fill customer-input with value succeeds",
+      "action": { "method": "dispatch", "args": ["customer-input", "fill", "Acme Corp"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "success": true }
+      }
+    },
+    {
+      "id": "ACT-006",
+      "name": "fill on non-form element order-table fails with TYPE_MISMATCH",
+      "action": { "method": "dispatch", "args": ["order-table", "fill", "some value"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "error": "TYPE_MISMATCH" }
+      }
+    },
+    {
+      "id": "ACT-007",
+      "name": "snapshot returns a collection of registered elements",
+      "action": { "method": "snapshot", "args": [] },
+      "expect": {
+        "not_null": true,
+        "has_length": { "gte": 1 }
+      }
+    },
+    {
+      "id": "ACT-008",
+      "name": "verifyLinkage on status-filter returns directEffects",
+      "action": { "method": "verifyLinkage", "args": ["status-filter"] },
+      "expect": {
+        "not_null": true,
+        "fields": { "directEffects": { "gte": 0 } }
+      }
+    },
+    {
+      "id": "ACT-009",
+      "name": "verifyLinkage on element without linkage returns result",
+      "action": { "method": "verifyLinkage", "args": ["amount-input"] },
+      "expect": {
+        "not_null": true
+      }
+    },
+    {
+      "id": "ACT-010",
+      "name": "actAndWait select filter then wait for order-table loaded",
+      "action": {
+        "method": "actAndWait",
+        "args": ["status-filter", "select", "pending"],
+        "waitFor": { "id": "order-table", "state": "loaded" }
+      },
+      "expect": {
+        "not_null": true,
+        "fields": { "success": true }
+      }
+    },
+    {
+      "id": "ACT-011",
+      "name": "diff_test returns a diff result between snapshots",
+      "action": { "method": "diff", "args": [] },
+      "expect": {
+        "not_null": true
+      }
+    },
+    {
+      "id": "ACT-012",
+      "name": "isEffectivelyVisible on order-table returns true",
+      "action": { "method": "isEffectivelyVisible", "args": ["order-table"] },
+      "expect": {
+        "is_true": true
+      }
+    }
+  ]
+}
